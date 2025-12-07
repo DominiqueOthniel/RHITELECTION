@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { persist, createJSONStorage } from 'zustand/middleware'
-import { syncCandidatesToSupabase, fetchCandidatesFromSupabase } from './supabase-helpers'
+import { syncCandidatesToSupabase, fetchCandidatesFromSupabase, deleteAllCandidates } from './supabase-helpers'
 
 export interface Candidate {
   id: string
@@ -31,7 +31,7 @@ interface CandidateStore {
   updateCandidate: (id: string, candidate: Partial<Candidate>) => Promise<void>
   deleteCandidate: (id: string) => Promise<void>
   getCandidateById: (id: string) => Candidate | undefined
-  clearAllCandidates: () => void
+  clearAllCandidates: () => Promise<void>
   initializeDefaultCandidates: () => void
   syncFromSupabase: () => Promise<void>
 }
@@ -260,8 +260,10 @@ export const useCandidateStore = create<CandidateStore>()(
         return get().candidates.find((c) => c.id === id)
       },
 
-      clearAllCandidates: () => {
+      clearAllCandidates: async () => {
         set({ candidates: [] })
+        // Supprimer aussi dans Supabase
+        await deleteAllCandidates()
       },
 
       initializeDefaultCandidates: () => {

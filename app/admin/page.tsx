@@ -932,10 +932,10 @@ export default function AdminPage() {
                   <motion.button
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
-                    onClick={() => {
+                    onClick={async () => {
                       if (confirm('Êtes-vous sûr de vouloir réinitialiser toutes les données ? Tous les candidats et votants seront supprimés et remplacés par les données par défaut.')) {
                         // Supprimer toutes les données
-                        clearAllCandidates()
+                        await clearAllCandidates()
                         if (typeof window !== 'undefined') {
                           localStorage.removeItem('voter-storage')
                           localStorage.removeItem('candidate-storage')
@@ -953,9 +953,9 @@ export default function AdminPage() {
                     <motion.button
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}
-                      onClick={() => {
+                      onClick={async () => {
                         if (confirm('Êtes-vous sûr de vouloir supprimer tous les candidats ?')) {
-                          clearAllCandidates()
+                          await clearAllCandidates()
                         }
                       }}
                       className="px-4 py-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-all flex items-center space-x-2"

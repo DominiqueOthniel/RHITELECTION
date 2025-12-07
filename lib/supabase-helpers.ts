@@ -314,6 +314,84 @@ export async function fetchElectionEndDate(): Promise<string | null> {
 }
 
 // ============================================
+// HELPERS POUR SUPPRIMER LES DONNÉES
+// ============================================
+
+export async function deleteAllCandidates() {
+  try {
+    // @ts-ignore - Type issue avec Supabase
+    const { error } = await supabase
+      .from('candidates')
+      .delete()
+      .neq('id', '00000000-0000-0000-0000-000000000000') // Supprimer tous (condition toujours vraie)
+
+    if (error) {
+      console.error('Erreur lors de la suppression des candidats:', error)
+      return { success: false, error }
+    }
+
+    return { success: true }
+  } catch (error) {
+    console.error('Erreur inattendue lors de la suppression:', error)
+    return { success: false, error }
+  }
+}
+
+export async function deleteAllVoterCodes() {
+  try {
+    // @ts-ignore - Type issue avec Supabase
+    const { error } = await supabase
+      .from('voter_codes')
+      .delete()
+      .neq('id', '00000000-0000-0000-0000-000000000000') // Supprimer tous
+
+    if (error) {
+      console.error('Erreur lors de la suppression des codes de voteurs:', error)
+      return { success: false, error }
+    }
+
+    return { success: true }
+  } catch (error) {
+    console.error('Erreur inattendue lors de la suppression:', error)
+    return { success: false, error }
+  }
+}
+
+export async function deleteAllVotes() {
+  try {
+    // @ts-ignore - Type issue avec Supabase
+    const { error } = await supabase
+      .from('votes')
+      .delete()
+      .neq('id', '00000000-0000-0000-0000-000000000000') // Supprimer tous
+
+    if (error) {
+      console.error('Erreur lors de la suppression des votes:', error)
+      return { success: false, error }
+    }
+
+    return { success: true }
+  } catch (error) {
+    console.error('Erreur inattendue lors de la suppression:', error)
+    return { success: false, error }
+  }
+}
+
+export async function deleteAllData() {
+  try {
+    // Supprimer dans l'ordre (votes d'abord à cause des foreign keys)
+    await deleteAllVotes()
+    await deleteAllVoterCodes()
+    await deleteAllCandidates()
+
+    return { success: true }
+  } catch (error) {
+    console.error('Erreur lors de la suppression de toutes les données:', error)
+    return { success: false, error }
+  }
+}
+
+// ============================================
 // HELPERS POUR RÉSULTATS
 // ============================================
 
