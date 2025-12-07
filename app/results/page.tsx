@@ -30,8 +30,11 @@ export default function ResultsPage() {
   const [timeRemaining, setTimeRemaining] = useState<{ days: number; hours: number; minutes: number; seconds: number; total: number } | null>(null)
 
   useEffect(() => {
-    setMounted(true)
-    initializeDefaultCandidates()
+    const init = async () => {
+      setMounted(true)
+      await initializeDefaultCandidates()
+    }
+    init()
   }, [initializeDefaultCandidates])
 
   useEffect(() => {

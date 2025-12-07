@@ -31,47 +31,50 @@ export default function VotePage() {
 
   // S'assurer que le composant est monté avant d'afficher les données
   useEffect(() => {
-    setMounted(true)
-    // Initialiser les candidats par défaut si le store est vide
-    initializeDefaultCandidates()
+    const init = async () => {
+      setMounted(true)
+      // Initialiser les candidats par défaut si le store est vide et synchroniser avec Supabase
+      await initializeDefaultCandidates()
 
-    // Vérifier si un code est passé en paramètre URL
-    if (typeof window !== 'undefined') {
-      const params = new URLSearchParams(window.location.search)
-      const codeParam = params.get('code')
-      const authParam = params.get('auth')
-      
-      // Si auth=true, ouvrir directement le modal d'authentification
-      if (authParam === 'true') {
-        if (!isElectionEnded()) {
-          setShowAuthModal(true)
-        } else {
-          setError('Les votes sont terminés. L\'élection est fermée.')
-        }
-        return
-      }
-      
-      if (codeParam) {
-        // Ne pas authentifier automatiquement si l'élection est terminée
-        if (isElectionEnded()) {
-          setError('Les votes sont terminés. L\'élection est fermée.')
-          setShowAuthModal(true)
-          setVoteCode(codeParam.toUpperCase())
+      // Vérifier si un code est passé en paramètre URL
+      if (typeof window !== 'undefined') {
+        const params = new URLSearchParams(window.location.search)
+        const codeParam = params.get('code')
+        const authParam = params.get('auth')
+        
+        // Si auth=true, ouvrir directement le modal d'authentification
+        if (authParam === 'true') {
+          if (!isElectionEnded()) {
+            setShowAuthModal(true)
+          } else {
+            setError('Les votes sont terminés. L\'élection est fermée.')
+          }
           return
         }
-        setVoteCode(codeParam.toUpperCase())
-        // Essayer d'authentifier automatiquement
-        const voter = getVoterByCode(codeParam.toUpperCase())
-        if (voter && !voter.hasVoted) {
-          setVoterInfo({ name: voter.name, email: voter.email })
-          setIsAuthenticated(true)
-          setStep('vote')
-        } else {
-          // Si l'authentification automatique échoue, ouvrir le modal avec le code pré-rempli
-          setShowAuthModal(true)
+        
+        if (codeParam) {
+          // Ne pas authentifier automatiquement si l'élection est terminée
+          if (isElectionEnded()) {
+            setError('Les votes sont terminés. L\'élection est fermée.')
+            setShowAuthModal(true)
+            setVoteCode(codeParam.toUpperCase())
+            return
+          }
+          setVoteCode(codeParam.toUpperCase())
+          // Essayer d'authentifier automatiquement
+          const voter = getVoterByCode(codeParam.toUpperCase())
+          if (voter && !voter.hasVoted) {
+            setVoterInfo({ name: voter.name, email: voter.email })
+            setIsAuthenticated(true)
+            setStep('vote')
+          } else {
+            // Si l'authentification automatique échoue, ouvrir le modal avec le code pré-rempli
+            setShowAuthModal(true)
+          }
         }
       }
     }
+    init()
   }, [initializeDefaultCandidates, getVoterByCode, isElectionEnded])
 
   // Mise à jour du compte à rebours

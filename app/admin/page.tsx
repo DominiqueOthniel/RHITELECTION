@@ -59,16 +59,19 @@ export default function AdminPage() {
 
   // S'assurer que le composant est monté avant d'afficher les données
   useEffect(() => {
-    setMounted(true)
-    // Initialiser les candidats par défaut si le store est vide
-    initializeDefaultCandidates()
-    
-    // Initialiser les champs de date si une date existe
-    if (endDate) {
-      const date = new Date(endDate)
-      setElectionEndDate(date.toISOString().split('T')[0])
-      setElectionEndTime(date.toTimeString().slice(0, 5))
+    const init = async () => {
+      setMounted(true)
+      // Initialiser les candidats par défaut si le store est vide et synchroniser avec Supabase
+      await initializeDefaultCandidates()
+      
+      // Initialiser les champs de date si une date existe
+      if (endDate) {
+        const date = new Date(endDate)
+        setElectionEndDate(date.toISOString().split('T')[0])
+        setElectionEndTime(date.toTimeString().slice(0, 5))
+      }
     }
+    init()
   }, [initializeDefaultCandidates, endDate])
   
   // Voter states

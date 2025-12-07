@@ -32,7 +32,7 @@ interface CandidateStore {
   deleteCandidate: (id: string) => Promise<void>
   getCandidateById: (id: string) => Candidate | undefined
   clearAllCandidates: () => Promise<void>
-  initializeDefaultCandidates: () => void
+  initializeDefaultCandidates: () => Promise<void>
   syncFromSupabase: () => Promise<void>
 }
 
@@ -266,10 +266,12 @@ export const useCandidateStore = create<CandidateStore>()(
         await deleteAllCandidates()
       },
 
-      initializeDefaultCandidates: () => {
+      initializeDefaultCandidates: async () => {
         const currentCandidates = get().candidates
         if (!currentCandidates || currentCandidates.length === 0) {
           set({ candidates: defaultCandidates })
+          // Synchroniser les candidats par défaut avec Supabase
+          await syncCandidatesToSupabase(defaultCandidates)
         }
       },
 
