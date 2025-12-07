@@ -1,0 +1,85 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+
+:root {
+  --bordeaux-primary: #8B1538;
+  --bordeaux-dark: #6A0F28;
+  --bordeaux-light: #A01A42;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  background: linear-gradient(135deg, #ffffff 0%, #fafafa 100%);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Optimisations de performance */
+img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* Amélioration du scroll sur mobile */
+@media (max-width: 768px) {
+  * {
+    -webkit-tap-highlight-color: transparent;
+  }
+  
+  body {
+    overflow-x: hidden;
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+  
+  .glass-effect {
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(139, 21, 56, 0.1);
+  }
+  
+  .gradient-bordeaux {
+    background: linear-gradient(135deg, #8B1538 0%, #A01A42 50%, #6A0F28 100%);
+  }
+  
+  .gradient-bordeaux-hover {
+    background: linear-gradient(135deg, #A01A42 0%, #8B1538 50%, #7A1230 100%);
+  }
+  
+  .shadow-bordeaux {
+    box-shadow: 0 10px 40px rgba(139, 21, 56, 0.2);
+  }
+  
+  .shadow-bordeaux-lg {
+    box-shadow: 0 20px 60px rgba(139, 21, 56, 0.3);
+  }
+
+  @keyframes shimmer {
+    0% {
+      transform: translateX(-100%) skewX(-12deg);
+    }
+    100% {
+      transform: translateX(200%) skewX(-12deg);
+    }
+  }
+
+  .animate-shimmer {
+    animation: shimmer 3s infinite;
+  }
+}
+
