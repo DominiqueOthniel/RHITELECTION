@@ -936,12 +936,13 @@ export default function AdminPage() {
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                     onClick={async () => {
-                      if (confirm('Êtes-vous sûr de vouloir réinitialiser toutes les données ? Tous les candidats et votants seront supprimés et remplacés par les données par défaut.')) {
+                      if (confirm('Êtes-vous sûr de vouloir supprimer toutes les données ? Tous les candidats et votants seront définitivement supprimés.')) {
                         // Supprimer toutes les données
                         await clearAllCandidates()
                         if (typeof window !== 'undefined') {
                           localStorage.removeItem('voter-storage')
                           localStorage.removeItem('candidate-storage')
+                          localStorage.removeItem('vote-storage')
                           // Recharger la page pour réinitialiser
                           window.location.reload()
                         }
