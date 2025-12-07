@@ -175,7 +175,7 @@ export default function VotePage() {
     }
   }
 
-  const handleVote = () => {
+  const handleVote = async () => {
     // Vérifier si l'élection est terminée
     if (isElectionEnded()) {
       alert('Les votes sont terminés. L\'élection est fermée. Vous ne pouvez plus voter.')
@@ -184,7 +184,7 @@ export default function VotePage() {
     
     if (selectedCandidate && voteCode) {
       // Enregistrer le vote
-      addVote(selectedCandidate, voteCode.toUpperCase())
+      await addVote(selectedCandidate, voteCode.toUpperCase())
       // Marquer le code comme utilisé
       markAsVoted(voteCode.toUpperCase())
       setStep('confirm')

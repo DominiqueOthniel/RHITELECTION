@@ -151,22 +151,22 @@ export default function AdminPage() {
     link.click()
   }
 
-  const handleResetVoteStats = () => {
+  const handleResetVoteStats = async () => {
     if (confirm('Êtes-vous sûr de vouloir réinitialiser toutes les statistiques de vote ?\n\nCette action va :\n- Supprimer tous les votes enregistrés\n- Réinitialiser le statut "a voté" de tous les votants\n- Réinitialiser la date de fin de l\'élection\n- Permettre de démarrer un nouveau cycle d\'élection\n\nCette action est irréversible.')) {
       clearAllVotes()
       resetVoteStats()
-      setEndDate(null) // Réinitialiser la date de fin pour permettre un nouveau cycle
+      await setEndDate(null) // Réinitialiser la date de fin pour permettre un nouveau cycle
       setElectionEndDate('')
       setElectionEndTime('')
       alert('Les statistiques de vote ont été réinitialisées avec succès. Vous pouvez maintenant configurer une nouvelle date de fin pour le prochain cycle d\'élection.')
     }
   }
 
-  const handleSetElectionEndDate = () => {
+  const handleSetElectionEndDate = async () => {
     if (electionEndDate && electionEndTime) {
       const dateTime = new Date(`${electionEndDate}T${electionEndTime}`)
       if (dateTime > new Date()) {
-        setEndDate(dateTime.toISOString())
+        await setEndDate(dateTime.toISOString())
         alert('Date de fin des votes configurée avec succès !')
       } else {
         alert('La date de fin doit être dans le futur.')
@@ -176,9 +176,9 @@ export default function AdminPage() {
     }
   }
 
-  const handleClearElectionEndDate = () => {
+  const handleClearElectionEndDate = async () => {
     if (confirm('Voulez-vous supprimer la date de fin des votes ?')) {
-      setEndDate(null)
+      await setEndDate(null)
       setElectionEndDate('')
       setElectionEndTime('')
     }
@@ -252,7 +252,7 @@ export default function AdminPage() {
     setCandidateForm({ ...candidateForm, experience: newExperience })
   }
 
-  const handleSubmitCandidate = (e: React.FormEvent) => {
+  const handleSubmitCandidate = async (e: React.FormEvent) => {
     e.preventDefault()
     const socialLinks = {
       linkedin: candidateForm.socialLinks.linkedin || undefined,
@@ -276,9 +276,9 @@ export default function AdminPage() {
     }
     
     if (editingCandidate) {
-      updateCandidate(editingCandidate.id, candidateData)
+      await updateCandidate(editingCandidate.id, candidateData)
     } else {
-      addCandidate(candidateData)
+      await addCandidate(candidateData)
     }
     handleCancelCandidateForm()
   }
@@ -1354,9 +1354,9 @@ export default function AdminPage() {
                             <Edit className="w-4 h-4" />
                           </button>
                           <button
-                            onClick={() => {
+                            onClick={async () => {
                               if (confirm('Êtes-vous sûr de vouloir supprimer ce candidat?')) {
-                                deleteCandidate(candidate.id)
+                                await deleteCandidate(candidate.id)
                               }
                             }}
                             className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"

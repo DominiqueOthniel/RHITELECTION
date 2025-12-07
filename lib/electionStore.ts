@@ -1,12 +1,14 @@
 import { create } from 'zustand'
 import { persist, createJSONStorage } from 'zustand/middleware'
+import { syncElectionEndDate, fetchElectionEndDate } from './supabase-helpers'
 
 interface ElectionStore {
   endDate: string | null // ISO string
-  setEndDate: (date: string | null) => void
+  setEndDate: (date: string | null) => Promise<void>
   getTimeRemaining: () => { days: number; hours: number; minutes: number; seconds: number; total: number } | null
   isElectionEnded: () => boolean
   isElectionStarted: () => boolean
+  syncFromSupabase: () => Promise<void>
 }
 
 export const useElectionStore = create<ElectionStore>()(
@@ -14,8 +16,10 @@ export const useElectionStore = create<ElectionStore>()(
     (set, get) => ({
       endDate: null, // Par défaut, pas de date de fin
 
-      setEndDate: (date: string | null) => {
+      setEndDate: async (date: string | null) => {
         set({ endDate: date })
+        // Synchroniser avec Supabase
+        await syncElectionEndDate(date)
       },
 
       getTimeRemaining: () => {
@@ -55,6 +59,11 @@ export const useElectionStore = create<ElectionStore>()(
         const end = new Date(endDate).getTime()
         // L'élection a commencé si la date de fin est configurée et pas encore atteinte
         return now < end
+      },
+
+      syncFromSupabase: async () => {
+        const supabaseEndDate = await fetchElectionEndDate()
+        set({ endDate: supabaseEndDate })
       },
     }),
     {

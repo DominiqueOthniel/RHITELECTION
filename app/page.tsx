@@ -67,16 +67,6 @@ export default function Home() {
             </div>
           </div>
           <div className="flex items-center space-x-2 sm:space-x-3">
-            <Link href="/admin">
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="px-3 py-2 sm:px-4 sm:py-2.5 bg-gray-100 text-gray-700 text-sm sm:text-base font-semibold rounded-xl hover:bg-gray-200 transition-all duration-300"
-              >
-                <span className="hidden sm:inline">Administration</span>
-                <span className="sm:hidden">Admin</span>
-              </motion.button>
-            </Link>
             <Link href="/vote">
               <motion.button
                 whileHover={{ scale: 1.05 }}

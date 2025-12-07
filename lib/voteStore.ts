@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { persist, createJSONStorage } from 'zustand/middleware'
+import { syncVoteToSupabase, fetchVotesFromSupabase } from './supabase-helpers'
 
 export interface Vote {
   id: string
@@ -10,10 +11,11 @@ export interface Vote {
 
 interface VoteStore {
   votes: Vote[]
-  addVote: (candidateId: string, voterCode: string) => void
+  addVote: (candidateId: string, voterCode: string) => Promise<void>
   getVotesByCandidate: (candidateId: string) => number
   getTotalVotes: () => number
   clearAllVotes: () => void
+  syncFromSupabase: () => Promise<void>
 }
 
 export const useVoteStore = create<VoteStore>()(
@@ -21,7 +23,7 @@ export const useVoteStore = create<VoteStore>()(
     (set, get) => ({
       votes: [],
 
-      addVote: (candidateId: string, voterCode: string) => {
+      addVote: async (candidateId: string, voterCode: string) => {
         const newVote: Vote = {
           id: Date.now().toString(),
           candidateId,
@@ -31,6 +33,8 @@ export const useVoteStore = create<VoteStore>()(
         set((state) => ({
           votes: [...state.votes, newVote],
         }))
+        // Synchroniser avec Supabase
+        await syncVoteToSupabase(candidateId, voterCode)
       },
 
       getVotesByCandidate: (candidateId: string) => {
@@ -43,6 +47,11 @@ export const useVoteStore = create<VoteStore>()(
 
       clearAllVotes: () => {
         set({ votes: [] })
+      },
+
+      syncFromSupabase: async () => {
+        const supabaseVotes = await fetchVotesFromSupabase()
+        set({ votes: supabaseVotes })
       },
     }),
     {

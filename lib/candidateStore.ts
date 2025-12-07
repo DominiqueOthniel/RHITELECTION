@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { persist, createJSONStorage } from 'zustand/middleware'
+import { syncCandidatesToSupabase, fetchCandidatesFromSupabase } from './supabase-helpers'
 
 export interface Candidate {
   id: string
@@ -26,12 +27,13 @@ type NewCandidateInput = Omit<Candidate, 'id' | 'createdAt'> & { initials?: stri
 
 interface CandidateStore {
   candidates: Candidate[]
-  addCandidate: (candidate: NewCandidateInput) => void
-  updateCandidate: (id: string, candidate: Partial<Candidate>) => void
-  deleteCandidate: (id: string) => void
+  addCandidate: (candidate: NewCandidateInput) => Promise<void>
+  updateCandidate: (id: string, candidate: Partial<Candidate>) => Promise<void>
+  deleteCandidate: (id: string) => Promise<void>
   getCandidateById: (id: string) => Candidate | undefined
   clearAllCandidates: () => void
   initializeDefaultCandidates: () => void
+  syncFromSupabase: () => Promise<void>
 }
 
 // Génère les initiales à partir du nom
@@ -222,7 +224,7 @@ export const useCandidateStore = create<CandidateStore>()(
     (set, get) => ({
       candidates: defaultCandidates,
 
-      addCandidate: (candidateData) => {
+      addCandidate: async (candidateData) => {
         const newCandidate: Candidate = {
           ...candidateData,
           id: Date.now().toString(),
@@ -232,20 +234,26 @@ export const useCandidateStore = create<CandidateStore>()(
         set((state) => ({
           candidates: [...state.candidates, newCandidate],
         }))
+        // Synchroniser avec Supabase
+        await syncCandidatesToSupabase([...get().candidates, newCandidate])
       },
 
-      updateCandidate: (id: string, updates: Partial<Candidate>) => {
+      updateCandidate: async (id: string, updates: Partial<Candidate>) => {
         set((state) => ({
           candidates: state.candidates.map((c) =>
             c.id === id ? { ...c, ...updates } : c
           ),
         }))
+        // Synchroniser avec Supabase
+        await syncCandidatesToSupabase(get().candidates)
       },
 
-      deleteCandidate: (id: string) => {
+      deleteCandidate: async (id: string) => {
         set((state) => ({
           candidates: state.candidates.filter((c) => c.id !== id),
         }))
+        // Synchroniser avec Supabase
+        await syncCandidatesToSupabase(get().candidates)
       },
 
       getCandidateById: (id: string) => {
@@ -260,6 +268,13 @@ export const useCandidateStore = create<CandidateStore>()(
         const currentCandidates = get().candidates
         if (!currentCandidates || currentCandidates.length === 0) {
           set({ candidates: defaultCandidates })
+        }
+      },
+
+      syncFromSupabase: async () => {
+        const supabaseCandidates = await fetchCandidatesFromSupabase()
+        if (supabaseCandidates.length > 0) {
+          set({ candidates: supabaseCandidates })
         }
       },
     }),
