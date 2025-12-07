@@ -316,7 +316,7 @@ export default function VotePage() {
                   <div className="bg-red-50 border-2 border-red-500 rounded-2xl p-6 text-center max-w-md mx-auto">
                     <AlertCircle className="w-12 h-12 text-red-600 mx-auto mb-3" />
                     <h3 className="text-xl font-bold text-red-900 mb-2">Les votes sont terminés</h3>
-                    <p className="text-red-700 mb-4">L'élection est fermée. Vous ne pouvez plus voter.</p>
+                    <p className="text-red-700 mb-4">L&apos;élection est fermée. Vous ne pouvez plus voter.</p>
                     <Link href="/results">
                       <motion.button
                         whileHover={{ scale: 1.05 }}
@@ -377,7 +377,7 @@ export default function VotePage() {
                 <div className="bg-white rounded-2xl shadow-xl p-12 text-center">
                   <UserCircle className="w-16 h-16 text-gray-300 mx-auto mb-4" />
                   <h3 className="text-xl font-bold text-gray-900 mb-2">Aucun candidat disponible</h3>
-                  <p className="text-gray-600">Les candidats n'ont pas encore été enregistrés par l'administrateur.</p>
+                  <p className="text-gray-600">Les candidats n&apos;ont pas encore été enregistrés par l&apos;administrateur.</p>
                 </div>
               ) : (
               <div className="grid md:grid-cols-1 gap-6 mb-8">
@@ -643,7 +643,7 @@ export default function VotePage() {
                     <div className="bg-red-50 border-2 border-red-500 rounded-2xl p-6 text-center">
                       <AlertCircle className="w-12 h-12 text-red-600 mx-auto mb-3" />
                       <h3 className="text-xl font-bold text-red-900 mb-2">Les votes sont terminés</h3>
-                      <p className="text-red-700 mb-4">L'élection est fermée. Vous ne pouvez plus voter.</p>
+                      <p className="text-red-700 mb-4">L&apos;élection est fermée. Vous ne pouvez plus voter.</p>
                       <Link href="/results">
                         <motion.button
                           whileHover={{ scale: 1.05 }}
@@ -783,7 +783,7 @@ export default function VotePage() {
                     transition={{ delay: 0.7 }}
                     className="text-gray-600 text-base sm:text-lg mb-2 sm:mb-3 px-2"
                   >
-                    Merci d'avoir participé aux élections.
+                    Merci d&apos;avoir participé aux élections.
                   </motion.p>
                   
                   <motion.p

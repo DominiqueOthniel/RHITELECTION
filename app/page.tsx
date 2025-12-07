@@ -169,7 +169,7 @@ export default function Home() {
             transition={{ delay: 0.4 }}
             className="text-base sm:text-lg md:text-xl text-gray-600 mb-8 sm:mb-10 max-w-2xl mx-auto leading-relaxed px-4"
           >
-            Participez aux élections du bureau des étudiants. Votre voix compte pour façonner l'avenir de notre université.
+            Participez aux élections du bureau des étudiants. Votre voix compte pour façonner l&apos;avenir de notre université.
           </motion.p>
 
           <motion.div
@@ -263,7 +263,7 @@ export default function Home() {
                   />
                 </div>
                 <p className="text-xs text-gray-500 text-center max-w-xs">
-                  Ce QR code vous mène directement à l'authentification pour voter
+                  Ce QR code vous mène directement à l&apos;authentification pour voter
                 </p>
               </div>
             </motion.div>
@@ -280,7 +280,7 @@ export default function Home() {
             className="max-w-5xl mx-auto"
           >
             <h3 className="text-2xl sm:text-3xl font-bold text-gray-900 text-center mb-6 sm:mb-8">
-              Statistiques de l'élection
+              Statistiques de l&apos;élection
             </h3>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6">
               <motion.div

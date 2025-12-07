@@ -604,7 +604,7 @@ export default function AdminPage() {
 
         {/* Configuration de l'élection */}
         <div className="bg-white rounded-2xl shadow-xl p-4 sm:p-6 md:p-8 mb-6 sm:mb-8">
-          <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4 sm:mb-6">Configuration de l'élection</h2>
+          <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4 sm:mb-6">Configuration de l&apos;élection</h2>
           
           <div className="space-y-4">
             <div>
@@ -1016,7 +1016,7 @@ export default function AdminPage() {
                     </div>
                     <div>
                       <label className="block text-sm font-semibold text-gray-700 mb-2">
-                        Année d'étude *
+                        Année d&apos;étude *
                       </label>
                       <input
                         type="text"
@@ -1147,11 +1147,12 @@ export default function AdminPage() {
                     <div className="space-y-4">
                       {imagePreview || candidateForm.image ? (
                         <div className="relative">
-                          <div className="w-32 h-32 rounded-xl overflow-hidden border-2 border-gray-200">
-                            <img 
-                              src={imagePreview || candidateForm.image} 
+                          <div className="w-32 h-32 rounded-xl overflow-hidden border-2 border-gray-200 relative">
+                            <Image 
+                              src={imagePreview || candidateForm.image || ''} 
                               alt="Preview" 
-                              className="w-full h-full object-cover"
+                              fill
+                              className="object-cover"
                             />
                           </div>
                           <button
@@ -1181,7 +1182,7 @@ export default function AdminPage() {
                         </label>
                       </div>
                       <div className="text-sm text-gray-500">
-                        <p>Ou entrez une URL d'image :</p>
+                        <p>Ou entrez une URL d&apos;image :</p>
                         <input
                           type="url"
                           value={candidateForm.image && !imagePreview ? candidateForm.image : ''}
@@ -1410,7 +1411,7 @@ export default function AdminPage() {
                     showDownload={true}
                   />
                   <p className="text-xs text-gray-500 text-center mt-4">
-                    L'étudiant peut scanner ce code pour accéder directement à l'authentification avec son code pré-rempli
+                    L&apos;étudiant peut scanner ce code pour accéder directement à l&apos;authentification avec son code pré-rempli
                   </p>
                 </div>
               </motion.div>

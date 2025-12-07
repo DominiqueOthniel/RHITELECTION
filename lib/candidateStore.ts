@@ -22,9 +22,11 @@ export interface Candidate {
   createdAt: string
 }
 
+type NewCandidateInput = Omit<Candidate, 'id' | 'createdAt'> & { initials?: string }
+
 interface CandidateStore {
   candidates: Candidate[]
-  addCandidate: (candidate: Omit<Candidate, 'id' | 'createdAt' | 'initials'>) => void
+  addCandidate: (candidate: NewCandidateInput) => void
   updateCandidate: (id: string, candidate: Partial<Candidate>) => void
   deleteCandidate: (id: string) => void
   getCandidateById: (id: string) => Candidate | undefined
@@ -224,7 +226,7 @@ export const useCandidateStore = create<CandidateStore>()(
         const newCandidate: Candidate = {
           ...candidateData,
           id: Date.now().toString(),
-          initials: candidateData.initials || generateInitials(candidateData.name),
+          initials: candidateData.initials ?? generateInitials(candidateData.name),
           createdAt: new Date().toISOString(),
         }
         set((state) => ({
