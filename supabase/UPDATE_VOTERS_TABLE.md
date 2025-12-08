@@ -41,3 +41,4 @@ Une fois la table créée, tous les nouveaux votants seront automatiquement sync
 - **Chargement automatique** : Au démarrage de l'application, les votants sont chargés depuis Supabase
 - **Temps réel** : Toutes les modifications sont immédiatement synchronisées
 
+

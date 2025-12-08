@@ -7,13 +7,15 @@ import Image from 'next/image'
 import { useElectionStore } from '@/lib/electionStore'
 import { useVoterStore } from '@/lib/store'
 import { useVoteStore } from '@/lib/voteStore'
+import { useCandidateStore } from '@/lib/candidateStore'
 import { useEffect, useState } from 'react'
 import QRCodeDisplay from '@/components/QRCodeDisplay'
 
 export default function Home() {
-  const { getTimeRemaining, isElectionEnded, isElectionStarted } = useElectionStore()
-  const { getVoterStats } = useVoterStore()
-  const { getTotalVotes } = useVoteStore()
+  const { getTimeRemaining, isElectionEnded, isElectionStarted, syncFromSupabase: syncElectionFromSupabase } = useElectionStore()
+  const { getVoterStats, syncFromSupabase: syncVotersFromSupabase } = useVoterStore()
+  const { getTotalVotes, syncFromSupabase: syncVotesFromSupabase } = useVoteStore()
+  const { initializeDefaultCandidates } = useCandidateStore()
   const [timeRemaining, setTimeRemaining] = useState<{ days: number; hours: number; minutes: number; seconds: number; total: number } | null>(null)
   const [electionEnded, setElectionEnded] = useState(false)
   const [electionStarted, setElectionStarted] = useState(false)
@@ -23,10 +25,44 @@ export default function Home() {
   const totalVotes = getTotalVotes()
   const participationRate = stats.total > 0 ? Math.round((stats.voted / stats.total) * 100) : 0
 
+  // Synchroniser toutes les données depuis Supabase au chargement
   useEffect(() => {
-    setMounted(true)
-  }, [])
+    const syncAllData = async () => {
+      try {
+        // Synchroniser toutes les données en parallèle pour plus de rapidité
+        await Promise.all([
+          syncElectionFromSupabase(), // Synchroniser la date de fin d'élection
+          initializeDefaultCandidates(), // Synchroniser les candidats
+          syncVotersFromSupabase(), // Synchroniser les votants
+          syncVotesFromSupabase(), // Synchroniser les votes
+        ])
+        setMounted(true)
+      } catch (error) {
+        console.error('Erreur lors de la synchronisation:', error)
+        setMounted(true) // Afficher quand même la page même en cas d'erreur
+      }
+    }
+    syncAllData()
+  }, [syncElectionFromSupabase, initializeDefaultCandidates, syncVotersFromSupabase, syncVotesFromSupabase])
 
+  // Rafraîchir les données toutes les 5 secondes pour rester synchronisé
+  useEffect(() => {
+    const refreshInterval = setInterval(async () => {
+      try {
+        await Promise.all([
+          syncElectionFromSupabase(), // Synchroniser la date de fin d'élection
+          syncVotersFromSupabase(), // Synchroniser les votants
+          syncVotesFromSupabase(), // Synchroniser les votes
+        ])
+      } catch (error) {
+        console.error('Erreur lors du rafraîchissement:', error)
+      }
+    }, 5000) // Rafraîchir toutes les 5 secondes
+
+    return () => clearInterval(refreshInterval)
+  }, [syncElectionFromSupabase, syncVotersFromSupabase, syncVotesFromSupabase])
+
+  // Mise à jour du compte à rebours chaque seconde
   useEffect(() => {
     const updateCountdown = () => {
       const remaining = getTimeRemaining()

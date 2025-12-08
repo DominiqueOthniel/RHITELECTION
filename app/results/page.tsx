@@ -22,22 +22,48 @@ interface Result {
 
 export default function ResultsPage() {
   const { candidates, initializeDefaultCandidates } = useCandidateStore()
-  const { getVotesByCandidate, getTotalVotes } = useVoteStore()
+  const { getVotesByCandidate, getTotalVotes, syncFromSupabase: syncVotesFromSupabase } = useVoteStore()
   const { getVoterStats, syncFromSupabase: syncVotersFromSupabase } = useVoterStore()
-  const { getTimeRemaining } = useElectionStore()
+  const { getTimeRemaining, syncFromSupabase: syncElectionFromSupabase } = useElectionStore()
   const [mounted, setMounted] = useState(false)
   const [results, setResults] = useState<Result[]>([])
   const [timeRemaining, setTimeRemaining] = useState<{ days: number; hours: number; minutes: number; seconds: number; total: number } | null>(null)
 
   useEffect(() => {
     const init = async () => {
-      setMounted(true)
-      // Synchroniser toutes les données depuis Supabase au démarrage
-      await initializeDefaultCandidates() // Charge les candidats depuis Supabase
-      await syncVotersFromSupabase() // Charge les votants depuis Supabase
+      try {
+        // Synchroniser toutes les données depuis Supabase au démarrage en parallèle
+        await Promise.all([
+          syncElectionFromSupabase(), // Synchroniser la date de fin d'élection
+          initializeDefaultCandidates(), // Charge les candidats depuis Supabase
+          syncVotersFromSupabase(), // Charge les votants depuis Supabase
+          syncVotesFromSupabase(), // Charge les votes depuis Supabase
+        ])
+        setMounted(true)
+      } catch (error) {
+        console.error('Erreur lors de l\'initialisation:', error)
+        setMounted(true) // Afficher quand même la page même en cas d'erreur
+      }
     }
     init()
-  }, [initializeDefaultCandidates, syncVotersFromSupabase])
+  }, [initializeDefaultCandidates, syncVotersFromSupabase, syncElectionFromSupabase, syncVotesFromSupabase])
+
+  // Rafraîchir les données toutes les 5 secondes pour rester synchronisé
+  useEffect(() => {
+    const refreshInterval = setInterval(async () => {
+      try {
+        await Promise.all([
+          syncElectionFromSupabase(), // Synchroniser la date de fin d'élection
+          syncVotersFromSupabase(), // Synchroniser les votants
+          syncVotesFromSupabase(), // Synchroniser les votes
+        ])
+      } catch (error) {
+        console.error('Erreur lors du rafraîchissement:', error)
+      }
+    }, 5000) // Rafraîchir toutes les 5 secondes
+
+    return () => clearInterval(refreshInterval)
+  }, [syncElectionFromSupabase, syncVotersFromSupabase, syncVotesFromSupabase])
 
   useEffect(() => {
     const updateCountdown = () => {

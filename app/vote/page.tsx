@@ -16,8 +16,8 @@ export default function VotePage() {
   const router = useRouter()
   const { getVoterByCode, markAsVoted, syncFromSupabase: syncVotersFromSupabase } = useVoterStore()
   const { candidates, initializeDefaultCandidates } = useCandidateStore()
-  const { addVote } = useVoteStore()
-  const { getTimeRemaining, isElectionEnded, isElectionStarted } = useElectionStore()
+  const { addVote, syncFromSupabase: syncVotesFromSupabase } = useVoteStore()
+  const { getTimeRemaining, isElectionEnded, isElectionStarted, syncFromSupabase: syncElectionFromSupabase } = useElectionStore()
   const [showAuthModal, setShowAuthModal] = useState(false)
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [step, setStep] = useState<'browse' | 'vote' | 'confirm'>('browse')
@@ -32,51 +32,77 @@ export default function VotePage() {
   // S'assurer que le composant est monté avant d'afficher les données
   useEffect(() => {
     const init = async () => {
-      setMounted(true)
-      // Synchroniser toutes les données depuis Supabase au démarrage
-      await initializeDefaultCandidates() // Charge les candidats depuis Supabase
-      await syncVotersFromSupabase() // Charge les votants depuis Supabase
+      try {
+        // Synchroniser toutes les données depuis Supabase au démarrage en parallèle
+        await Promise.all([
+          syncElectionFromSupabase(), // Synchroniser la date de fin d'élection
+          initializeDefaultCandidates(), // Charge les candidats depuis Supabase
+          syncVotersFromSupabase(), // Charge les votants depuis Supabase
+          syncVotesFromSupabase(), // Charge les votes depuis Supabase
+        ])
+        setMounted(true)
 
-      // Vérifier si un code est passé en paramètre URL
-      if (typeof window !== 'undefined') {
-        const params = new URLSearchParams(window.location.search)
-        const codeParam = params.get('code')
-        const authParam = params.get('auth')
-        
-        // Si auth=true, ouvrir directement le modal d'authentification
-        if (authParam === 'true') {
-          if (!isElectionEnded()) {
-            setShowAuthModal(true)
-          } else {
-            setError('Les votes sont terminés. L\'élection est fermée.')
-          }
-          return
-        }
-        
-        if (codeParam) {
-          // Ne pas authentifier automatiquement si l'élection est terminée
-          if (isElectionEnded()) {
-            setError('Les votes sont terminés. L\'élection est fermée.')
-            setShowAuthModal(true)
-            setVoteCode(codeParam.toUpperCase())
+        // Vérifier si un code est passé en paramètre URL
+        if (typeof window !== 'undefined') {
+          const params = new URLSearchParams(window.location.search)
+          const codeParam = params.get('code')
+          const authParam = params.get('auth')
+          
+          // Si auth=true, ouvrir directement le modal d'authentification
+          if (authParam === 'true') {
+            if (!isElectionEnded()) {
+              setShowAuthModal(true)
+            } else {
+              setError('Les votes sont terminés. L\'élection est fermée.')
+            }
             return
           }
-          setVoteCode(codeParam.toUpperCase())
-          // Essayer d'authentifier automatiquement
-          const voter = getVoterByCode(codeParam.toUpperCase())
-          if (voter && !voter.hasVoted) {
-            setVoterInfo({ name: voter.name, email: voter.email })
-            setIsAuthenticated(true)
-            setStep('vote')
-          } else {
-            // Si l'authentification automatique échoue, ouvrir le modal avec le code pré-rempli
-            setShowAuthModal(true)
+          
+          if (codeParam) {
+            // Ne pas authentifier automatiquement si l'élection est terminée
+            if (isElectionEnded()) {
+              setError('Les votes sont terminés. L\'élection est fermée.')
+              setShowAuthModal(true)
+              setVoteCode(codeParam.toUpperCase())
+              return
+            }
+            setVoteCode(codeParam.toUpperCase())
+            // Essayer d'authentifier automatiquement
+            const voter = getVoterByCode(codeParam.toUpperCase())
+            if (voter && !voter.hasVoted) {
+              setVoterInfo({ name: voter.name, email: voter.email })
+              setIsAuthenticated(true)
+              setStep('vote')
+            } else {
+              // Si l'authentification automatique échoue, ouvrir le modal avec le code pré-rempli
+              setShowAuthModal(true)
+            }
           }
         }
+      } catch (error) {
+        console.error('Erreur lors de l\'initialisation:', error)
+        setMounted(true) // Afficher quand même la page même en cas d'erreur
       }
     }
     init()
-  }, [initializeDefaultCandidates, getVoterByCode, isElectionEnded, syncVotersFromSupabase])
+  }, [initializeDefaultCandidates, getVoterByCode, isElectionEnded, syncVotersFromSupabase, syncElectionFromSupabase, syncVotesFromSupabase])
+
+  // Rafraîchir les données toutes les 5 secondes pour rester synchronisé
+  useEffect(() => {
+    const refreshInterval = setInterval(async () => {
+      try {
+        await Promise.all([
+          syncElectionFromSupabase(), // Synchroniser la date de fin d'élection
+          syncVotersFromSupabase(), // Synchroniser les votants
+          syncVotesFromSupabase(), // Synchroniser les votes
+        ])
+      } catch (error) {
+        console.error('Erreur lors du rafraîchissement:', error)
+      }
+    }, 5000) // Rafraîchir toutes les 5 secondes
+
+    return () => clearInterval(refreshInterval)
+  }, [syncElectionFromSupabase, syncVotersFromSupabase, syncVotesFromSupabase])
 
   // Mise à jour du compte à rebours
   useEffect(() => {
