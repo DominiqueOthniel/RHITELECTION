@@ -26,9 +26,10 @@ ALTER TABLE votes DROP CONSTRAINT IF EXISTS votes_election_id_fkey;
 ALTER TABLE voter_codes DROP CONSTRAINT IF EXISTS voter_codes_election_id_fkey;
 ALTER TABLE voter_codes DROP CONSTRAINT IF EXISTS voter_codes_voter_id_fkey;
 
--- Modifier les types
+-- Modifier les types (dans l'ordre : d'abord les tables référencées, puis les tables qui référencent)
 ALTER TABLE candidates ALTER COLUMN id TYPE VARCHAR(255);
 ALTER TABLE elections ALTER COLUMN id TYPE VARCHAR(255);
+ALTER TABLE voters ALTER COLUMN id TYPE VARCHAR(255);
 ALTER TABLE votes ALTER COLUMN id TYPE VARCHAR(255);
 ALTER TABLE votes ALTER COLUMN candidate_id TYPE VARCHAR(255);
 ALTER TABLE votes ALTER COLUMN election_id TYPE VARCHAR(255);
