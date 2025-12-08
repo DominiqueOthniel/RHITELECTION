@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import { 
   UserPlus, 
@@ -39,6 +40,7 @@ import { useElectionStore } from '@/lib/electionStore'
 import QRCodeDisplay from '@/components/QRCodeDisplay'
 
 export default function AdminPage() {
+  const router = useRouter()
   const { voters, addVoter, deleteVoter, getVoterStats, resetVoteStats, syncFromSupabase: syncVotersFromSupabase } = useVoterStore()
   const { candidates, addCandidate, updateCandidate, deleteCandidate, clearAllCandidates, initializeDefaultCandidates } = useCandidateStore()
   const { clearAllVotes, getVotesByCandidate, getTotalVotes, votes, syncFromSupabase: syncVotesFromSupabase } = useVoteStore()
@@ -170,11 +172,28 @@ export default function AdminPage() {
     }
   }
 
+  const handleLogout = () => {
+    if (confirm('Voulez-vous vous déconnecter ?')) {
+      sessionStorage.removeItem('admin_logged_in')
+      sessionStorage.removeItem('admin_username')
+      router.push('/login')
+    }
+  }
+
   const timeRemaining = getTimeRemaining()
 
-  // Synchroniser toutes les données depuis Supabase au démarrage
+  // Vérifier l'authentification et synchroniser les données
   useEffect(() => {
     const init = async () => {
+      // Vérifier si l'utilisateur est connecté
+      if (typeof window !== 'undefined') {
+        const isLoggedIn = sessionStorage.getItem('admin_logged_in')
+        if (isLoggedIn !== 'true') {
+          router.push('/login')
+          return
+        }
+      }
+
       setMounted(true)
       // Forcer la synchronisation depuis Supabase
       await initializeDefaultCandidates() // Charge les candidats depuis Supabase
@@ -190,7 +209,7 @@ export default function AdminPage() {
       }
     }
     init()
-  }, [initializeDefaultCandidates, syncVotersFromSupabase, syncVotesFromSupabase, syncElectionFromSupabase, endDate])
+  }, [router, initializeDefaultCandidates, syncVotersFromSupabase, syncVotesFromSupabase, syncElectionFromSupabase, endDate])
 
   // Mise à jour du classement en temps réel
   useEffect(() => {
