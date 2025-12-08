@@ -83,15 +83,8 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 -- REMPLACEZ 'votre-hash-de-mot-de-passe' par un hash sécurisé de votre mot de passe
 -- Vous pouvez utiliser bcrypt ou SHA-256 pour hasher votre mot de passe
 
-INSERT INTO admin_users (id, username, password_hash, email, is_active)
-VALUES (
-  'admin-001',
-  'admin',
-  '$2a$10$rOzJqXKqXKqXKqXKqXKqXeXKqXKqXKqXKqXKqXKqXKqXKqXKqXK', -- REMPLACEZ par votre hash
-  'admin@rhit.com',
-  true
-)
-ON CONFLICT (username) DO NOTHING;
+-- Note: L'admin par défaut sera créé avec le script create-admin.sql
+-- Exécutez ce script séparément après avoir créé la table
 
 -- Note: Pour générer un hash de mot de passe sécurisé, vous pouvez utiliser:
 -- - En ligne: https://bcrypt-generator.com/
