@@ -111,11 +111,13 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+DROP TRIGGER IF EXISTS update_candidates_updated_at ON candidates;
 CREATE TRIGGER update_candidates_updated_at
   BEFORE UPDATE ON candidates
   FOR EACH ROW
   EXECUTE FUNCTION update_updated_at_column();
 
+DROP TRIGGER IF EXISTS update_elections_updated_at ON elections;
 CREATE TRIGGER update_elections_updated_at
   BEFORE UPDATE ON elections
   FOR EACH ROW
@@ -134,6 +136,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+DROP TRIGGER IF EXISTS mark_code_used_on_vote ON votes;
 CREATE TRIGGER mark_code_used_on_vote
   AFTER INSERT ON votes
   FOR EACH ROW
@@ -144,6 +147,7 @@ CREATE TRIGGER mark_code_used_on_vote
 -- ============================================
 
 -- Vue pour les résultats des votes par candidat
+DROP VIEW IF EXISTS vote_results CASCADE;
 CREATE OR REPLACE VIEW vote_results AS
 SELECT 
   c.id as candidate_id,
@@ -165,6 +169,7 @@ GROUP BY c.id, c.name, c."position", c.initials
 ORDER BY vote_count DESC;
 
 -- Vue pour les statistiques d'élection
+DROP VIEW IF EXISTS election_stats CASCADE;
 CREATE OR REPLACE VIEW election_stats AS
 SELECT 
   e.id as election_id,
