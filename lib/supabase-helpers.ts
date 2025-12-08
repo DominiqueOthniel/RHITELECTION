@@ -9,6 +9,13 @@ import type { Database } from './supabase'
 
 export async function syncCandidatesToSupabase(candidates: Candidate[]) {
   try {
+    // Éliminer les doublons en utilisant une Map (garder la dernière occurrence de chaque ID)
+    const uniqueCandidatesMap = new Map<string, Candidate>()
+    for (const candidate of candidates) {
+      uniqueCandidatesMap.set(candidate.id, candidate)
+    }
+    const uniqueCandidates = Array.from(uniqueCandidatesMap.values())
+
     // Récupérer tous les candidats existants
     const { data: existingCandidates, error: fetchError } = await supabase
       .from('candidates')
@@ -22,7 +29,7 @@ export async function syncCandidatesToSupabase(candidates: Candidate[]) {
     const existingIds = new Set((existingCandidates || []).map((c: { id: string }) => c.id))
 
     // Préparer les données pour Supabase (conversion des noms de propriétés)
-    const candidatesToInsert: Database['public']['Tables']['candidates']['Insert'][] = candidates.map(candidate => ({
+    const candidatesToInsert: Database['public']['Tables']['candidates']['Insert'][] = uniqueCandidates.map(candidate => ({
       id: candidate.id,
       name: candidate.name,
       position: candidate.position,
@@ -224,7 +231,14 @@ export async function syncVotersToSupabase(voters: Array<{
   try {
     if (voters.length === 0) return { success: true }
 
-    const votersToInsert = voters.map(voter => ({
+    // Éliminer les doublons en utilisant une Map (garder la dernière occurrence de chaque ID)
+    const uniqueVotersMap = new Map<string, typeof voters[0]>()
+    for (const voter of voters) {
+      uniqueVotersMap.set(voter.id, voter)
+    }
+    const uniqueVoters = Array.from(uniqueVotersMap.values())
+
+    const votersToInsert = uniqueVoters.map(voter => ({
       id: voter.id,
       student_id: voter.studentId,
       email: voter.email,
@@ -248,7 +262,7 @@ export async function syncVotersToSupabase(voters: Array<{
     }
 
     // Créer aussi les codes dans voter_codes
-    const codes = voters.map(v => v.voteCode)
+    const codes = uniqueVoters.map(v => v.voteCode)
     await createVoterCodes(codes)
 
     return { success: true }

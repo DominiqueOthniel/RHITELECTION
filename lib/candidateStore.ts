@@ -63,8 +63,8 @@ export const useCandidateStore = create<CandidateStore>()(
         set((state) => ({
           candidates: [...state.candidates, newCandidate],
         }))
-        // Synchroniser avec Supabase
-        await syncCandidatesToSupabase([...get().candidates, newCandidate])
+        // Synchroniser avec Supabase (get().candidates contient déjà le nouveau candidat)
+        await syncCandidatesToSupabase(get().candidates)
       },
 
       updateCandidate: async (id: string, updates: Partial<Candidate>) => {
