@@ -41,8 +41,8 @@ import QRCodeDisplay from '@/components/QRCodeDisplay'
 export default function AdminPage() {
   const { voters, addVoter, deleteVoter, getVoterStats, resetVoteStats, syncFromSupabase: syncVotersFromSupabase } = useVoterStore()
   const { candidates, addCandidate, updateCandidate, deleteCandidate, clearAllCandidates, initializeDefaultCandidates } = useCandidateStore()
-  const { clearAllVotes, getVotesByCandidate, getTotalVotes, votes } = useVoteStore()
-  const { endDate, setEndDate, getTimeRemaining } = useElectionStore()
+  const { clearAllVotes, getVotesByCandidate, getTotalVotes, votes, syncFromSupabase: syncVotesFromSupabase } = useVoteStore()
+  const { endDate, setEndDate, getTimeRemaining, syncFromSupabase: syncElectionFromSupabase } = useElectionStore()
   const [activeTab, setActiveTab] = useState<'voters' | 'candidates'>('voters')
   const [mounted, setMounted] = useState(false)
   const [electionEndDate, setElectionEndDate] = useState('')
@@ -56,25 +56,6 @@ export default function AdminPage() {
     image?: string
     initials: string
   }>>([])
-
-  // S'assurer que le composant est monté avant d'afficher les données
-  useEffect(() => {
-    const init = async () => {
-      setMounted(true)
-      // Initialiser les candidats par défaut si le store est vide et synchroniser avec Supabase
-      await initializeDefaultCandidates()
-      // Charger les votants depuis Supabase
-      await syncVotersFromSupabase()
-      
-      // Initialiser les champs de date si une date existe
-      if (endDate) {
-        const date = new Date(endDate)
-        setElectionEndDate(date.toISOString().split('T')[0])
-        setElectionEndTime(date.toTimeString().slice(0, 5))
-      }
-    }
-    init()
-  }, [initializeDefaultCandidates, endDate, syncVotersFromSupabase])
   
   // Voter states
   const [studentId, setStudentId] = useState('')

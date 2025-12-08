@@ -33,10 +33,9 @@ export default function VotePage() {
   useEffect(() => {
     const init = async () => {
       setMounted(true)
-      // Initialiser les candidats par défaut si le store est vide et synchroniser avec Supabase
-      await initializeDefaultCandidates()
-      // Charger les votants depuis Supabase
-      await syncVotersFromSupabase()
+      // Synchroniser toutes les données depuis Supabase au démarrage
+      await initializeDefaultCandidates() // Charge les candidats depuis Supabase
+      await syncVotersFromSupabase() // Charge les votants depuis Supabase
 
       // Vérifier si un code est passé en paramètre URL
       if (typeof window !== 'undefined') {

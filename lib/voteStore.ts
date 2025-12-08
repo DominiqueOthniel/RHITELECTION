@@ -51,8 +51,9 @@ export const useVoteStore = create<VoteStore>()(
       },
 
       syncFromSupabase: async () => {
+        // Toujours charger depuis Supabase pour synchroniser avec la base de données
         const supabaseVotes = await fetchVotesFromSupabase()
-        set({ votes: supabaseVotes })
+        set({ votes: supabaseVotes }) // Même si vide, on synchronise
       },
     }),
     {

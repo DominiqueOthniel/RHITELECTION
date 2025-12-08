@@ -96,15 +96,13 @@ export const useCandidateStore = create<CandidateStore>()(
       },
 
       initializeDefaultCandidates: async () => {
-        // Ne plus charger de candidats par défaut
-        // Les candidats doivent être ajoutés manuellement ou chargés depuis Supabase
-        const currentCandidates = get().candidates
-        if (!currentCandidates || currentCandidates.length === 0) {
-          // Essayer de charger depuis Supabase
-          const supabaseCandidates = await fetchCandidatesFromSupabase()
-          if (supabaseCandidates.length > 0) {
-            set({ candidates: supabaseCandidates })
-          }
+        // Toujours charger depuis Supabase pour synchroniser avec la base de données
+        const supabaseCandidates = await fetchCandidatesFromSupabase()
+        if (supabaseCandidates.length > 0) {
+          set({ candidates: supabaseCandidates })
+        } else {
+          // Si Supabase est vide, s'assurer que le store local est aussi vide
+          set({ candidates: [] })
         }
       },
 

@@ -111,10 +111,9 @@ export const useVoterStore = create<VoterStore>()(
       },
 
       syncFromSupabase: async () => {
+        // Toujours charger depuis Supabase pour synchroniser avec la base de données
         const supabaseVoters = await fetchVotersFromSupabase()
-        if (supabaseVoters.length > 0) {
-          set({ voters: supabaseVoters })
-        }
+        set({ voters: supabaseVoters }) // Même si vide, on synchronise
       },
     }),
     {

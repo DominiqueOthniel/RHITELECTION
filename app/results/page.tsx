@@ -32,8 +32,9 @@ export default function ResultsPage() {
   useEffect(() => {
     const init = async () => {
       setMounted(true)
-      await initializeDefaultCandidates()
-      await syncVotersFromSupabase()
+      // Synchroniser toutes les données depuis Supabase au démarrage
+      await initializeDefaultCandidates() // Charge les candidats depuis Supabase
+      await syncVotersFromSupabase() // Charge les votants depuis Supabase
     }
     init()
   }, [initializeDefaultCandidates, syncVotersFromSupabase])
