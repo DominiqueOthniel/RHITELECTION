@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { persist, createJSONStorage } from 'zustand/middleware'
+import { syncVoterToSupabase, syncVotersToSupabase, fetchVotersFromSupabase, deleteVoterFromSupabase, deleteAllVoters } from './supabase-helpers'
 
 export interface Voter {
   id: string
@@ -13,12 +14,13 @@ export interface Voter {
 
 interface VoterStore {
   voters: Voter[]
-  addVoter: (studentId: string, email: string, name: string) => string
+  addVoter: (studentId: string, email: string, name: string) => Promise<string>
   getVoterByCode: (code: string) => Voter | undefined
-  markAsVoted: (code: string) => void
-  deleteVoter: (id: string) => void
+  markAsVoted: (code: string) => Promise<void>
+  deleteVoter: (id: string) => Promise<void>
   getVoterStats: () => { total: number; voted: number; pending: number }
-  resetVoteStats: () => void
+  resetVoteStats: () => Promise<void>
+  syncFromSupabase: () => Promise<void>
 }
 
 // Génère un code de vote unique
@@ -48,7 +50,7 @@ export const useVoterStore = create<VoterStore>()(
     (set, get) => ({
       voters: [],
 
-      addVoter: (studentId: string, email: string, name: string) => {
+      addVoter: async (studentId: string, email: string, name: string) => {
         const code = generateVoteCode()
         const newVoter: Voter = {
           id: Date.now().toString(),
@@ -62,6 +64,8 @@ export const useVoterStore = create<VoterStore>()(
         set((state) => ({
           voters: [...state.voters, newVoter],
         }))
+        // Synchroniser avec Supabase
+        await syncVoterToSupabase(newVoter)
         return code
       },
 
@@ -69,18 +73,24 @@ export const useVoterStore = create<VoterStore>()(
         return get().voters.find((v) => v.voteCode === code)
       },
 
-      markAsVoted: (code: string) => {
-        set((state) => ({
-          voters: state.voters.map((v) =>
-            v.voteCode === code ? { ...v, hasVoted: true } : v
-          ),
-        }))
+      markAsVoted: async (code: string) => {
+        const updatedVoters = get().voters.map((v) =>
+          v.voteCode === code ? { ...v, hasVoted: true } : v
+        )
+        set({ voters: updatedVoters })
+        const updatedVoter = updatedVoters.find(v => v.voteCode === code)
+        if (updatedVoter) {
+          // Synchroniser avec Supabase
+          await syncVoterToSupabase(updatedVoter)
+        }
       },
 
-      deleteVoter: (id: string) => {
+      deleteVoter: async (id: string) => {
         set((state) => ({
           voters: state.voters.filter((v) => v.id !== id),
         }))
+        // Supprimer aussi dans Supabase
+        await deleteVoterFromSupabase(id)
       },
 
       getVoterStats: () => {
@@ -92,10 +102,18 @@ export const useVoterStore = create<VoterStore>()(
         }
       },
 
-      resetVoteStats: () => {
-        set((state) => ({
-          voters: state.voters.map((v) => ({ ...v, hasVoted: false })),
-        }))
+      resetVoteStats: async () => {
+        const updatedVoters = get().voters.map((v) => ({ ...v, hasVoted: false }))
+        set({ voters: updatedVoters })
+        // Synchroniser tous les votants avec Supabase
+        await syncVotersToSupabase(updatedVoters)
+      },
+
+      syncFromSupabase: async () => {
+        const supabaseVoters = await fetchVotersFromSupabase()
+        if (supabaseVoters.length > 0) {
+          set({ voters: supabaseVoters })
+        }
       },
     }),
     {

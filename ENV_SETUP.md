@@ -24,3 +24,4 @@ SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
 - La clé `service_role` ne doit être utilisée que côté serveur
 - Les clés `NEXT_PUBLIC_*` seront exposées côté client
 
+

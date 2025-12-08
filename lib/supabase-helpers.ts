@@ -168,6 +168,164 @@ export async function fetchVotesFromSupabase(electionId?: string): Promise<Vote[
 }
 
 // ============================================
+// HELPERS POUR VOTERS
+// ============================================
+
+export async function syncVoterToSupabase(voter: {
+  id: string
+  studentId: string
+  email: string
+  name: string
+  voteCode: string
+  hasVoted: boolean
+  createdAt: string
+}) {
+  try {
+    // @ts-ignore - Type issue avec Supabase
+    const { error } = await supabase
+      .from('voters')
+      .upsert({
+        id: voter.id,
+        student_id: voter.studentId,
+        email: voter.email,
+        name: voter.name,
+        vote_code: voter.voteCode,
+        has_voted: voter.hasVoted,
+        created_at: voter.createdAt,
+      } as any, {
+        onConflict: 'id',
+        ignoreDuplicates: false,
+      })
+
+    if (error) {
+      console.error('Erreur lors de la synchronisation du votant:', error)
+      return { success: false, error }
+    }
+
+    // Créer aussi le code dans voter_codes si nécessaire
+    await createVoterCodes([voter.voteCode])
+
+    return { success: true }
+  } catch (error) {
+    console.error('Erreur inattendue lors de la synchronisation:', error)
+    return { success: false, error }
+  }
+}
+
+export async function syncVotersToSupabase(voters: Array<{
+  id: string
+  studentId: string
+  email: string
+  name: string
+  voteCode: string
+  hasVoted: boolean
+  createdAt: string
+}>) {
+  try {
+    if (voters.length === 0) return { success: true }
+
+    const votersToInsert = voters.map(voter => ({
+      id: voter.id,
+      student_id: voter.studentId,
+      email: voter.email,
+      name: voter.name,
+      vote_code: voter.voteCode,
+      has_voted: voter.hasVoted,
+      created_at: voter.createdAt,
+    }))
+
+    // @ts-ignore - Type issue avec Supabase
+    const { error } = await supabase
+      .from('voters')
+      .upsert(votersToInsert as any, {
+        onConflict: 'id',
+        ignoreDuplicates: false,
+      })
+
+    if (error) {
+      console.error('Erreur lors de la synchronisation des votants:', error)
+      return { success: false, error }
+    }
+
+    // Créer aussi les codes dans voter_codes
+    const codes = voters.map(v => v.voteCode)
+    await createVoterCodes(codes)
+
+    return { success: true }
+  } catch (error) {
+    console.error('Erreur inattendue lors de la synchronisation:', error)
+    return { success: false, error }
+  }
+}
+
+export async function fetchVotersFromSupabase() {
+  try {
+    const { data, error } = await supabase
+      .from('voters')
+      .select('*')
+      .order('created_at', { ascending: false })
+
+    if (error) {
+      console.error('Erreur lors de la récupération des votants:', error)
+      return []
+    }
+
+    return (data || []).map((voter: any) => ({
+      id: voter.id,
+      studentId: voter.student_id,
+      email: voter.email,
+      name: voter.name,
+      voteCode: voter.vote_code,
+      hasVoted: voter.has_voted,
+      createdAt: voter.created_at,
+    }))
+  } catch (error) {
+    console.error('Erreur inattendue lors de la récupération:', error)
+    return []
+  }
+}
+
+export async function deleteVoterFromSupabase(voterId: string) {
+  try {
+    // @ts-ignore - Type issue avec Supabase
+    const { error } = await supabase
+      .from('voters')
+      .delete()
+      .eq('id', voterId)
+
+    if (error) {
+      console.error('Erreur lors de la suppression du votant:', error)
+      return { success: false, error }
+    }
+
+    return { success: true }
+  } catch (error) {
+    console.error('Erreur inattendue lors de la suppression:', error)
+    return { success: false, error }
+  }
+}
+
+export async function deleteAllVoters() {
+  try {
+    // @ts-ignore - Type issue avec Supabase
+    const { error } = await supabase
+      .from('voters')
+      .delete()
+      .neq('id', '00000000-0000-0000-0000-000000000000') // Supprimer tous
+
+    if (error) {
+      console.error('Erreur lors de la suppression des votants:', error)
+      return { success: false, error }
+    }
+
+    return { success: true }
+  } catch (error) {
+    console.error('Erreur inattendue lors de la suppression:', error)
+    return { success: false, error }
+  }
+}
+
+// ============================================
 // HELPERS POUR VOTER CODES
 // ============================================
 

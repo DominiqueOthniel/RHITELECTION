@@ -98,6 +98,35 @@ export interface Database {
           updated_at?: string
         }
       }
+      voters: {
+        Row: {
+          id: string
+          student_id: string
+          email: string
+          name: string
+          vote_code: string
+          has_voted: boolean
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          student_id: string
+          email: string
+          name: string
+          vote_code: string
+          has_voted?: boolean
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          student_id?: string
+          email?: string
+          name?: string
+          vote_code?: string
+          has_voted?: boolean
+          created_at?: string
+        }
+      }
       voter_codes: {
         Row: {
           id: string
@@ -105,6 +134,7 @@ export interface Database {
           is_used: boolean
           used_at: string | null
           election_id: string | null
+          voter_id: string | null
           created_at: string
         }
         Insert: {
@@ -113,6 +143,7 @@ export interface Database {
           is_used?: boolean
           used_at?: string | null
           election_id?: string | null
+          voter_id?: string | null
           created_at?: string
         }
         Update: {
@@ -121,6 +152,7 @@ export interface Database {
           is_used?: boolean
           used_at?: string | null
           election_id?: string | null
+          voter_id?: string | null
           created_at?: string
         }
       }
@@ -226,4 +258,5 @@ export const createAdminClient = () => {
     },
   })
 }
+
 

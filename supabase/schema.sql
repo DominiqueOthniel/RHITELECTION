@@ -46,6 +46,24 @@ CREATE INDEX IF NOT EXISTS idx_elections_is_active ON elections(is_active);
 CREATE INDEX IF NOT EXISTS idx_elections_end_date ON elections(end_date);
 
 -- ============================================
+-- TABLE: voters
+-- ============================================
+CREATE TABLE IF NOT EXISTS voters (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  student_id VARCHAR(255) NOT NULL,
+  email VARCHAR(255) NOT NULL,
+  name VARCHAR(255) NOT NULL,
+  vote_code VARCHAR(255) UNIQUE NOT NULL,
+  has_voted BOOLEAN DEFAULT false,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Index pour les codes de vote
+CREATE INDEX IF NOT EXISTS idx_voters_vote_code ON voters(vote_code);
+CREATE INDEX IF NOT EXISTS idx_voters_student_id ON voters(student_id);
+CREATE INDEX IF NOT EXISTS idx_voters_email ON voters(email);
+
+-- ============================================
 -- TABLE: voter_codes
 -- ============================================
 CREATE TABLE IF NOT EXISTS voter_codes (
@@ -54,6 +72,7 @@ CREATE TABLE IF NOT EXISTS voter_codes (
   is_used BOOLEAN DEFAULT false,
   used_at TIMESTAMPTZ,
   election_id UUID REFERENCES elections(id) ON DELETE CASCADE,
+  voter_id UUID REFERENCES voters(id) ON DELETE CASCADE,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 

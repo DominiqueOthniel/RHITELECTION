@@ -23,7 +23,7 @@ interface Result {
 export default function ResultsPage() {
   const { candidates, initializeDefaultCandidates } = useCandidateStore()
   const { getVotesByCandidate, getTotalVotes } = useVoteStore()
-  const { getVoterStats } = useVoterStore()
+  const { getVoterStats, syncFromSupabase: syncVotersFromSupabase } = useVoterStore()
   const { getTimeRemaining } = useElectionStore()
   const [mounted, setMounted] = useState(false)
   const [results, setResults] = useState<Result[]>([])
@@ -33,9 +33,10 @@ export default function ResultsPage() {
     const init = async () => {
       setMounted(true)
       await initializeDefaultCandidates()
+      await syncVotersFromSupabase()
     }
     init()
-  }, [initializeDefaultCandidates])
+  }, [initializeDefaultCandidates, syncVotersFromSupabase])
 
   useEffect(() => {
     const updateCountdown = () => {

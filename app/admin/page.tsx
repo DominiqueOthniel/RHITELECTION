@@ -39,7 +39,7 @@ import { useElectionStore } from '@/lib/electionStore'
 import QRCodeDisplay from '@/components/QRCodeDisplay'
 
 export default function AdminPage() {
-  const { voters, addVoter, deleteVoter, getVoterStats, resetVoteStats } = useVoterStore()
+  const { voters, addVoter, deleteVoter, getVoterStats, resetVoteStats, syncFromSupabase: syncVotersFromSupabase } = useVoterStore()
   const { candidates, addCandidate, updateCandidate, deleteCandidate, clearAllCandidates, initializeDefaultCandidates } = useCandidateStore()
   const { clearAllVotes, getVotesByCandidate, getTotalVotes, votes } = useVoteStore()
   const { endDate, setEndDate, getTimeRemaining } = useElectionStore()
@@ -63,6 +63,8 @@ export default function AdminPage() {
       setMounted(true)
       // Initialiser les candidats par défaut si le store est vide et synchroniser avec Supabase
       await initializeDefaultCandidates()
+      // Charger les votants depuis Supabase
+      await syncVotersFromSupabase()
       
       // Initialiser les champs de date si une date existe
       if (endDate) {
@@ -72,7 +74,7 @@ export default function AdminPage() {
       }
     }
     init()
-  }, [initializeDefaultCandidates, endDate])
+  }, [initializeDefaultCandidates, endDate, syncVotersFromSupabase])
   
   // Voter states
   const [studentId, setStudentId] = useState('')
@@ -109,7 +111,7 @@ export default function AdminPage() {
 
   const stats = getVoterStats()
 
-  const handleAddVoter = (e: React.FormEvent) => {
+  const handleAddVoter = async (e: React.FormEvent) => {
     e.preventDefault()
     if (studentId && email && name) {
       // Vérifier si le numéro étudiant existe déjà
@@ -118,7 +120,7 @@ export default function AdminPage() {
         return
       }
       
-      const code = addVoter(studentId, email, name)
+      const code = await addVoter(studentId, email, name)
       setNewVoterCode(code)
       setStudentId('')
       setEmail('')
@@ -157,7 +159,7 @@ export default function AdminPage() {
   const handleResetVoteStats = async () => {
     if (confirm('Êtes-vous sûr de vouloir réinitialiser toutes les statistiques de vote ?\n\nCette action va :\n- Supprimer tous les votes enregistrés\n- Réinitialiser le statut "a voté" de tous les votants\n- Réinitialiser la date de fin de l\'élection\n- Permettre de démarrer un nouveau cycle d\'élection\n\nCette action est irréversible.')) {
       clearAllVotes()
-      resetVoteStats()
+      await resetVoteStats()
       await setEndDate(null) // Réinitialiser la date de fin pour permettre un nouveau cycle
       setElectionEndDate('')
       setElectionEndTime('')
@@ -903,9 +905,9 @@ export default function AdminPage() {
                       </td>
                       <td className="py-3 sm:py-4 px-3 sm:px-4">
                         <button
-                          onClick={() => {
+                          onClick={async () => {
                             if (confirm('Êtes-vous sûr de vouloir supprimer ce votant?')) {
-                              deleteVoter(voter.id)
+                              await deleteVoter(voter.id)
                             }
                           }}
                           className="p-1.5 sm:p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
@@ -938,6 +940,8 @@ export default function AdminPage() {
                     onClick={async () => {
                       if (confirm('Êtes-vous sûr de vouloir supprimer toutes les données ? Tous les candidats et votants seront définitivement supprimés.')) {
                         // Supprimer toutes les données
+                        const { deleteAllData } = await import('@/lib/supabase-helpers')
+                        await deleteAllData()
                         await clearAllCandidates()
                         if (typeof window !== 'undefined') {
                           localStorage.removeItem('voter-storage')

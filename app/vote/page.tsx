@@ -14,7 +14,7 @@ import QRCodeScanner from '@/components/QRCodeScanner'
 
 export default function VotePage() {
   const router = useRouter()
-  const { getVoterByCode, markAsVoted } = useVoterStore()
+  const { getVoterByCode, markAsVoted, syncFromSupabase: syncVotersFromSupabase } = useVoterStore()
   const { candidates, initializeDefaultCandidates } = useCandidateStore()
   const { addVote } = useVoteStore()
   const { getTimeRemaining, isElectionEnded, isElectionStarted } = useElectionStore()
@@ -35,6 +35,8 @@ export default function VotePage() {
       setMounted(true)
       // Initialiser les candidats par défaut si le store est vide et synchroniser avec Supabase
       await initializeDefaultCandidates()
+      // Charger les votants depuis Supabase
+      await syncVotersFromSupabase()
 
       // Vérifier si un code est passé en paramètre URL
       if (typeof window !== 'undefined') {
@@ -75,7 +77,7 @@ export default function VotePage() {
       }
     }
     init()
-  }, [initializeDefaultCandidates, getVoterByCode, isElectionEnded])
+  }, [initializeDefaultCandidates, getVoterByCode, isElectionEnded, syncVotersFromSupabase])
 
   // Mise à jour du compte à rebours
   useEffect(() => {
@@ -189,7 +191,7 @@ export default function VotePage() {
       // Enregistrer le vote
       await addVote(selectedCandidate, voteCode.toUpperCase())
       // Marquer le code comme utilisé
-      markAsVoted(voteCode.toUpperCase())
+      await markAsVoted(voteCode.toUpperCase())
       setStep('confirm')
       
       // Rediriger automatiquement vers les statistiques après 3 secondes

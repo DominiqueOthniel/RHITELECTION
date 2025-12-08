@@ -56,3 +56,4 @@ Enregistre tous les votes avec référence au candidat et au code votant.
 
 Les politiques Row Level Security sont activées par défaut. Ajustez-les selon vos besoins d'authentification dans le fichier `schema.sql`.
 
+
