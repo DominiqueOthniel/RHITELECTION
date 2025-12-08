@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { persist, createJSONStorage } from 'zustand/middleware'
 import { syncCandidatesToSupabase, fetchCandidatesFromSupabase, deleteAllCandidates } from './supabase-helpers'
+import { generateUUID } from './utils'
 
 export interface Candidate {
   id: string
@@ -55,7 +56,7 @@ export const useCandidateStore = create<CandidateStore>()(
       addCandidate: async (candidateData) => {
         const newCandidate: Candidate = {
           ...candidateData,
-          id: Date.now().toString(),
+          id: generateUUID(),
           initials: candidateData.initials ?? generateInitials(candidateData.name),
           createdAt: new Date().toISOString(),
         }

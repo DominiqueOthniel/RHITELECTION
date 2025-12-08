@@ -9,7 +9,7 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 -- TABLE: candidates
 -- ============================================
 CREATE TABLE IF NOT EXISTS candidates (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id VARCHAR(255) PRIMARY KEY,
   name VARCHAR(255) NOT NULL,
   "position" VARCHAR(255) NOT NULL,
   description TEXT,
@@ -32,7 +32,7 @@ CREATE INDEX IF NOT EXISTS idx_candidates_created_at ON candidates(created_at);
 -- TABLE: elections
 -- ============================================
 CREATE TABLE IF NOT EXISTS elections (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id VARCHAR(255) PRIMARY KEY,
   name VARCHAR(255) NOT NULL DEFAULT 'Élection RHIT',
   start_date TIMESTAMPTZ DEFAULT NOW(),
   end_date TIMESTAMPTZ,
@@ -49,7 +49,7 @@ CREATE INDEX IF NOT EXISTS idx_elections_end_date ON elections(end_date);
 -- TABLE: voters
 -- ============================================
 CREATE TABLE IF NOT EXISTS voters (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id VARCHAR(255) PRIMARY KEY,
   student_id VARCHAR(255) NOT NULL,
   email VARCHAR(255) NOT NULL,
   name VARCHAR(255) NOT NULL,
@@ -67,12 +67,12 @@ CREATE INDEX IF NOT EXISTS idx_voters_email ON voters(email);
 -- TABLE: voter_codes
 -- ============================================
 CREATE TABLE IF NOT EXISTS voter_codes (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id VARCHAR(255) PRIMARY KEY,
   code VARCHAR(255) UNIQUE NOT NULL,
   is_used BOOLEAN DEFAULT false,
   used_at TIMESTAMPTZ,
-  election_id UUID REFERENCES elections(id) ON DELETE CASCADE,
-  voter_id UUID REFERENCES voters(id) ON DELETE CASCADE,
+  election_id VARCHAR(255) REFERENCES elections(id) ON DELETE CASCADE,
+  voter_id VARCHAR(255) REFERENCES voters(id) ON DELETE CASCADE,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
@@ -85,10 +85,10 @@ CREATE INDEX IF NOT EXISTS idx_voter_codes_election_id ON voter_codes(election_i
 -- TABLE: votes
 -- ============================================
 CREATE TABLE IF NOT EXISTS votes (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  candidate_id UUID NOT NULL REFERENCES candidates(id) ON DELETE CASCADE,
+  id VARCHAR(255) PRIMARY KEY,
+  candidate_id VARCHAR(255) NOT NULL REFERENCES candidates(id) ON DELETE CASCADE,
   voter_code VARCHAR(255) NOT NULL,
-  election_id UUID REFERENCES elections(id) ON DELETE CASCADE,
+  election_id VARCHAR(255) REFERENCES elections(id) ON DELETE CASCADE,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   -- Contrainte pour éviter les votes multiples avec le même code
   UNIQUE(voter_code, election_id)
@@ -243,7 +243,7 @@ CREATE POLICY "Votes can be inserted by anyone"
 -- Fonction pour vérifier si un code de voteur est valide
 CREATE OR REPLACE FUNCTION is_voter_code_valid(
   p_code VARCHAR(255),
-  p_election_id UUID
+  p_election_id VARCHAR(255)
 )
 RETURNS BOOLEAN AS $$
 DECLARE
@@ -266,9 +266,9 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- Fonction pour obtenir les résultats d'une élection
-CREATE OR REPLACE FUNCTION get_election_results(p_election_id UUID)
+CREATE OR REPLACE FUNCTION get_election_results(p_election_id VARCHAR(255))
 RETURNS TABLE (
-  candidate_id UUID,
+  candidate_id VARCHAR(255),
   candidate_name VARCHAR(255),
   "position" VARCHAR(255),
   vote_count BIGINT,

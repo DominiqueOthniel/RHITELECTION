@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { persist, createJSONStorage } from 'zustand/middleware'
 import { syncVoterToSupabase, syncVotersToSupabase, fetchVotersFromSupabase, deleteVoterFromSupabase, deleteAllVoters } from './supabase-helpers'
+import { generateUUID } from './utils'
 
 export interface Voter {
   id: string
@@ -53,7 +54,7 @@ export const useVoterStore = create<VoterStore>()(
       addVoter: async (studentId: string, email: string, name: string) => {
         const code = generateVoteCode()
         const newVoter: Voter = {
-          id: Date.now().toString(),
+          id: generateUUID(),
           studentId,
           email,
           name,
