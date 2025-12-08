@@ -107,18 +107,18 @@ export const useCandidateStore = create<CandidateStore>()(
       },
 
       syncFromSupabase: async () => {
+        // Toujours charger depuis Supabase pour synchroniser avec la base de données
         const supabaseCandidates = await fetchCandidatesFromSupabase()
-        if (supabaseCandidates.length > 0) {
-          set({ candidates: supabaseCandidates })
-        }
+        set({ candidates: supabaseCandidates }) // Même si vide, on synchronise
       },
     }),
     {
       name: 'candidate-storage',
       storage: createJSONStorage(() => localStorage),
       onRehydrateStorage: () => (state) => {
-        // Ne plus charger de candidats par défaut
-        return state || { candidates: [] }
+        // Ne pas charger depuis localStorage, on chargera depuis Supabase
+        // Retourner un état vide pour forcer le chargement depuis Supabase
+        return { candidates: [] }
       },
     }
   )

@@ -172,6 +172,26 @@ export default function AdminPage() {
 
   const timeRemaining = getTimeRemaining()
 
+  // Synchroniser toutes les données depuis Supabase au démarrage
+  useEffect(() => {
+    const init = async () => {
+      setMounted(true)
+      // Forcer la synchronisation depuis Supabase
+      await initializeDefaultCandidates() // Charge les candidats depuis Supabase
+      await syncVotersFromSupabase() // Charge les votants depuis Supabase
+      await syncVotesFromSupabase() // Charge les votes depuis Supabase
+      await syncElectionFromSupabase() // Charge la date de fin depuis Supabase
+      
+      // Initialiser les champs de date si une date existe
+      if (endDate) {
+        const date = new Date(endDate)
+        setElectionEndDate(date.toISOString().split('T')[0])
+        setElectionEndTime(date.toTimeString().slice(0, 5))
+      }
+    }
+    init()
+  }, [initializeDefaultCandidates, syncVotersFromSupabase, syncVotesFromSupabase, syncElectionFromSupabase, endDate])
+
   // Mise à jour du classement en temps réel
   useEffect(() => {
     const updateRanking = () => {

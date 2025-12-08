@@ -120,8 +120,9 @@ export const useVoterStore = create<VoterStore>()(
       name: 'voter-storage',
       storage: createJSONStorage(() => localStorage),
       onRehydrateStorage: () => (state) => {
-        // Ne plus charger de votants par défaut
-        return state || { voters: [] }
+        // Ne pas charger depuis localStorage, on chargera depuis Supabase
+        // Retourner un état vide pour forcer le chargement depuis Supabase
+        return { voters: [] }
       },
     }
   )

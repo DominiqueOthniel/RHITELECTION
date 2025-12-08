@@ -46,8 +46,11 @@ export const useVoteStore = create<VoteStore>()(
         return get().votes.length
       },
 
-      clearAllVotes: () => {
+      clearAllVotes: async () => {
         set({ votes: [] })
+        // Supprimer aussi dans Supabase
+        const { deleteAllVotes } = await import('./supabase-helpers')
+        await deleteAllVotes()
       },
 
       syncFromSupabase: async () => {
