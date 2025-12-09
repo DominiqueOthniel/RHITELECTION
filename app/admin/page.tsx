@@ -422,7 +422,9 @@ export default function AdminPage() {
         twitter: '',
         instagram: '',
         facebook: '',
-        website: ''
+        website: '',
+        tiktok: '',
+        whatsapp: ''
       }
     })
   }
