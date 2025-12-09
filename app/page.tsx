@@ -446,7 +446,7 @@ export default function Home() {
             </div>
             <h3 className="text-lg sm:text-xl font-bold">RHIT Élections</h3>
           </div>
-          <p className="text-sm sm:text-base text-bordeaux-200">© 2024 Bureau des Étudiants - Tous droits réservés</p>
+          <p className="text-sm sm:text-base text-bordeaux-200">© 2025 Bureau des Étudiants - Tous droits réservés</p>
         </div>
       </footer>
     </div>

@@ -63,7 +63,7 @@ Ouvrez [http://localhost:3000](http://localhost:3000) dans votre navigateur.
 
 ## 📝 Licence
 
-© 2024 Bureau des Étudiants RHIT - Tous droits réservés
+© 2025 Bureau des Étudiants RHIT - Tous droits réservés
 
 
 
