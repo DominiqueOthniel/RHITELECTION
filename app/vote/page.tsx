@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Vote, Lock, CheckCircle, ArrowLeft, Key, AlertCircle, XCircle, User, Award, BookOpen, Target, Sparkles, GraduationCap, Briefcase, UserCircle, Linkedin, Twitter, Instagram, Facebook, Globe, ExternalLink, X, Clock, ArrowRight, QrCode, Trophy } from 'lucide-react'
+import { Vote, Lock, CheckCircle, ArrowLeft, Key, AlertCircle, XCircle, User, Award, BookOpen, Target, Sparkles, GraduationCap, Briefcase, UserCircle, Linkedin, Twitter, Instagram, Facebook, Globe, ExternalLink, X, Clock, ArrowRight, QrCode, Trophy, MessageCircle } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
@@ -635,6 +635,32 @@ export default function VotePage() {
                                   >
                                     <Globe className="w-4 h-4" />
                                     <span>Site web</span>
+                                    <ExternalLink className="w-3 h-3" />
+                                  </a>
+                                )}
+                                {candidate.socialLinks.tiktok && (
+                                  <a
+                                    href={candidate.socialLinks.tiktok}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="flex items-center space-x-2 px-3 py-2 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors text-sm font-medium"
+                                  >
+                                    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                                      <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.79 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z"/>
+                                    </svg>
+                                    <span>TikTok</span>
+                                    <ExternalLink className="w-3 h-3" />
+                                  </a>
+                                )}
+                                {candidate.socialLinks.whatsapp && (
+                                  <a
+                                    href={`https://wa.me/${candidate.socialLinks.whatsapp.replace(/[^0-9]/g, '')}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="flex items-center space-x-2 px-3 py-2 bg-green-50 text-green-700 rounded-lg hover:bg-green-100 transition-colors text-sm font-medium"
+                                  >
+                                    <MessageCircle className="w-4 h-4" />
+                                    <span>WhatsApp</span>
                                     <ExternalLink className="w-3 h-3" />
                                   </a>
                                 )}

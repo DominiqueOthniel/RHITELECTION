@@ -29,7 +29,8 @@ import {
   QrCode,
   Trophy,
   Medal,
-  Award
+  Award,
+  MessageCircle
 } from 'lucide-react'
 import Link from 'next/link'
 import Image from 'next/image'
@@ -88,7 +89,9 @@ export default function AdminPage() {
       twitter: '',
       instagram: '',
       facebook: '',
-      website: ''
+      website: '',
+      tiktok: '',
+      whatsapp: ''
     }
   })
 
@@ -320,6 +323,8 @@ export default function AdminPage() {
       instagram: candidateForm.socialLinks.instagram || undefined,
       facebook: candidateForm.socialLinks.facebook || undefined,
       website: candidateForm.socialLinks.website || undefined,
+      tiktok: candidateForm.socialLinks.tiktok || undefined,
+      whatsapp: candidateForm.socialLinks.whatsapp || undefined,
     }
     
     const candidateData = {
@@ -361,7 +366,9 @@ export default function AdminPage() {
         twitter: candidate.socialLinks?.twitter || '',
         instagram: candidate.socialLinks?.instagram || '',
         facebook: candidate.socialLinks?.facebook || '',
-        website: candidate.socialLinks?.website || ''
+        website: candidate.socialLinks?.website || '',
+        tiktok: candidate.socialLinks?.tiktok || '',
+        whatsapp: candidate.socialLinks?.whatsapp || ''
       }
     })
     setImagePreview(candidate.image || null)
@@ -1342,6 +1349,40 @@ export default function AdminPage() {
                           })}
                           className="w-full px-4 py-2 border-2 border-gray-200 rounded-xl focus:border-bordeaux-500 focus:ring-2 focus:ring-bordeaux-200 transition-all outline-none"
                           placeholder="https://example.com"
+                        />
+                      </div>
+                      <div>
+                        <label className="flex items-center space-x-2 text-sm text-gray-600 mb-2">
+                          <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.79 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z"/>
+                          </svg>
+                          <span>TikTok</span>
+                        </label>
+                        <input
+                          type="url"
+                          value={candidateForm.socialLinks.tiktok}
+                          onChange={(e) => setCandidateForm({
+                            ...candidateForm,
+                            socialLinks: { ...candidateForm.socialLinks, tiktok: e.target.value }
+                          })}
+                          className="w-full px-4 py-2 border-2 border-gray-200 rounded-xl focus:border-bordeaux-500 focus:ring-2 focus:ring-bordeaux-200 transition-all outline-none"
+                          placeholder="https://tiktok.com/@..."
+                        />
+                      </div>
+                      <div>
+                        <label className="flex items-center space-x-2 text-sm text-gray-600 mb-2">
+                          <MessageCircle className="w-4 h-4 text-green-600" />
+                          <span>WhatsApp</span>
+                        </label>
+                        <input
+                          type="text"
+                          value={candidateForm.socialLinks.whatsapp}
+                          onChange={(e) => setCandidateForm({
+                            ...candidateForm,
+                            socialLinks: { ...candidateForm.socialLinks, whatsapp: e.target.value }
+                          })}
+                          className="w-full px-4 py-2 border-2 border-gray-200 rounded-xl focus:border-bordeaux-500 focus:ring-2 focus:ring-bordeaux-200 transition-all outline-none"
+                          placeholder="+33 6 12 34 56 78"
                         />
                       </div>
                     </div>

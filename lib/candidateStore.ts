@@ -20,6 +20,8 @@ export interface Candidate {
     instagram?: string
     facebook?: string
     website?: string
+    tiktok?: string
+    whatsapp?: string
   }
   createdAt: string
 }
