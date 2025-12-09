@@ -1065,7 +1065,6 @@ export default function AdminPage() {
                         onChange={(e) => setCandidateForm({ ...candidateForm, initials: e.target.value.toUpperCase() })}
                         className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-bordeaux-500 focus:ring-2 focus:ring-bordeaux-200 transition-all outline-none"
                         placeholder="MD"
-                        maxLength={2}
                       />
                     </div>
                   </div>
