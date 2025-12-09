@@ -185,13 +185,17 @@ export default function AdminPage() {
   // Vérifier l'authentification et synchroniser les données
   useEffect(() => {
     const init = async () => {
-      // Vérifier si l'utilisateur est connecté
+      // TOUJOURS vérifier si l'utilisateur est connecté (protection obligatoire)
       if (typeof window !== 'undefined') {
         const isLoggedIn = sessionStorage.getItem('admin_logged_in')
         if (isLoggedIn !== 'true') {
           router.push('/login')
           return
         }
+      } else {
+        // Si window n'est pas disponible, rediriger vers login
+        router.push('/login')
+        return
       }
 
       setMounted(true)
@@ -210,6 +214,37 @@ export default function AdminPage() {
     }
     init()
   }, [router, initializeDefaultCandidates, syncVotersFromSupabase, syncVotesFromSupabase, syncElectionFromSupabase, endDate])
+
+  // Vérification périodique de l'authentification (toutes les 30 secondes)
+  useEffect(() => {
+    const checkAuth = () => {
+      if (typeof window !== 'undefined') {
+        const isLoggedIn = sessionStorage.getItem('admin_logged_in')
+        if (isLoggedIn !== 'true') {
+          router.push('/login')
+        }
+      }
+    }
+
+    // Vérifier immédiatement
+    checkAuth()
+    
+    // Vérifier toutes les 30 secondes
+    const authInterval = setInterval(checkAuth, 30000)
+
+    // Vérifier aussi quand la fenêtre redevient visible
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        checkAuth()
+      }
+    }
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+
+    return () => {
+      clearInterval(authInterval)
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+    }
+  }, [router])
 
   // Mise à jour du classement en temps réel
   useEffect(() => {
