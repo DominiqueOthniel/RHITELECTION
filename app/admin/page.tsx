@@ -168,6 +168,44 @@ export default function AdminPage() {
     link.click()
   }
 
+  const handleImportVoters = async () => {
+    if (!confirm(`Êtes-vous sûr de vouloir importer ${votersData.length} votants depuis la liste des examens ?\n\nCette action va créer tous les votants avec leurs filières et années d&apos;études.`)) {
+      return
+    }
+
+    try {
+      let imported = 0
+      let skipped = 0
+      let errors = 0
+
+      for (let i = 0; i < votersData.length; i++) {
+        const voterData = votersData[i]
+        try {
+          // Générer un ID étudiant unique
+          const studentId = generateStudentId(i)
+          
+          // Vérifier si le numéro étudiant existe déjà
+          if (voters.some(v => v.studentId === studentId)) {
+            skipped++
+            continue
+          }
+
+          // Ajouter le votant
+          await addVoter(studentId, voterData.name, voterData.year, voterData.field)
+          imported++
+        } catch (error) {
+          console.error(`Erreur lors de l'import du votant ${voterData.name}:`, error)
+          errors++
+        }
+      }
+
+      alert(`Import terminé !\n\n✅ ${imported} votants importés\n⚠️ ${skipped} votants ignorés (déjà existants)\n❌ ${errors} erreurs`)
+    } catch (error) {
+      console.error('Erreur lors de l\'import:', error)
+      alert('Une erreur est survenue lors de l\'import des votants.')
+    }
+  }
+
   const handleResetVoteStats = async () => {
     if (confirm('Êtes-vous sûr de vouloir réinitialiser toutes les statistiques de vote ?\n\nCette action va :\n- Supprimer tous les votes enregistrés\n- Réinitialiser le statut "a voté" de tous les votants\n- Réinitialiser la date de fin de l\'élection\n- Permettre de démarrer un nouveau cycle d\'élection\n\nCette action est irréversible.')) {
       clearAllVotes()
