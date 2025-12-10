@@ -185,6 +185,7 @@ export async function syncVoterToSupabase(voter: {
   name: string
   voteCode: string
   hasVoted: boolean
+  whatsapp?: string
   createdAt: string
 }) {
   try {
@@ -198,6 +199,7 @@ export async function syncVoterToSupabase(voter: {
         name: voter.name,
         vote_code: voter.voteCode,
         has_voted: voter.hasVoted,
+        whatsapp: voter.whatsapp || null,
         created_at: voter.createdAt,
       } as any, {
         onConflict: 'id',
@@ -226,6 +228,7 @@ export async function syncVotersToSupabase(voters: Array<{
   name: string
   voteCode: string
   hasVoted: boolean
+  whatsapp?: string
   createdAt: string
 }>) {
   try {
@@ -245,6 +248,7 @@ export async function syncVotersToSupabase(voters: Array<{
       name: voter.name,
       vote_code: voter.voteCode,
       has_voted: voter.hasVoted,
+      whatsapp: voter.whatsapp || null,
       created_at: voter.createdAt,
     }))
 
@@ -291,6 +295,7 @@ export async function fetchVotersFromSupabase() {
       name: voter.name,
       voteCode: voter.vote_code,
       hasVoted: voter.has_voted,
+      whatsapp: voter.whatsapp || undefined,
       createdAt: voter.created_at,
     }))
   } catch (error) {

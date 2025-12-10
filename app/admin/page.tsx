@@ -64,6 +64,7 @@ export default function AdminPage() {
   const [studentId, setStudentId] = useState('')
   const [email, setEmail] = useState('')
   const [name, setName] = useState('')
+  const [whatsapp, setWhatsapp] = useState('')
   const [copiedCode, setCopiedCode] = useState<string | null>(null)
   const [showAddForm, setShowAddForm] = useState(false)
   const [newVoterCode, setNewVoterCode] = useState<string | null>(null)
@@ -106,16 +107,40 @@ export default function AdminPage() {
         return
       }
       
-      const code = await addVoter(studentId, email, name)
+      const code = await addVoter(studentId, email, name, whatsapp || undefined)
       setNewVoterCode(code)
       setStudentId('')
       setEmail('')
       setName('')
+      setWhatsapp('')
       setShowAddForm(false)
       
       // Réinitialiser le code affiché après 5 secondes
       setTimeout(() => setNewVoterCode(null), 5000)
     }
+  }
+
+  const handleSendWhatsApp = (voter: { name: string; voteCode: string; whatsapp?: string }) => {
+    if (!voter.whatsapp) {
+      alert('Aucun numéro WhatsApp enregistré pour ce votant.')
+      return
+    }
+    
+    // Nettoyer le numéro (enlever espaces, tirets, etc.)
+    const cleanNumber = voter.whatsapp.replace(/[^0-9+]/g, '')
+    
+    // Message à envoyer
+    const message = encodeURIComponent(
+      `Bonjour ${voter.name},\n\n` +
+      `Votre code de vote pour l'élection du Bureau des Étudiants RHIT est :\n\n` +
+      `🔑 ${voter.voteCode}\n\n` +
+      `Vous pouvez voter en utilisant ce code sur : ${typeof window !== 'undefined' ? window.location.origin : ''}/vote\n\n` +
+      `Merci de votre participation !`
+    )
+    
+    // Ouvrir WhatsApp avec le message
+    const whatsappUrl = `https://wa.me/${cleanNumber}?text=${message}`
+    window.open(whatsappUrl, '_blank')
   }
 
   const handleCopyCode = (code: string) => {
@@ -876,6 +901,18 @@ export default function AdminPage() {
                     required
                   />
                 </div>
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    WhatsApp (optionnel)
+                  </label>
+                  <input
+                    type="text"
+                    value={whatsapp}
+                    onChange={(e) => setWhatsapp(e.target.value)}
+                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-bordeaux-500 focus:ring-2 focus:ring-bordeaux-200 transition-all outline-none"
+                    placeholder="+33 6 12 34 56 78"
+                  />
+                </div>
               </div>
               <motion.button
                 type="submit"
@@ -950,6 +987,15 @@ export default function AdminPage() {
                           >
                             <QrCode className="w-3 h-3 sm:w-4 sm:h-4 text-bordeaux-600" />
                           </button>
+                          {voter.whatsapp && (
+                            <button
+                              onClick={() => handleSendWhatsApp(voter)}
+                              className="p-1 hover:bg-green-50 rounded transition-colors"
+                              title="Envoyer le code par WhatsApp"
+                            >
+                              <MessageCircle className="w-3 h-3 sm:w-4 sm:h-4 text-green-600" />
+                            </button>
+                          )}
                         </div>
                       </td>
                       <td className="py-3 sm:py-4 px-3 sm:px-4">
