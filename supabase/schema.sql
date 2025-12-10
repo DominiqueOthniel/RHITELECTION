@@ -56,6 +56,8 @@ CREATE TABLE IF NOT EXISTS voters (
   vote_code VARCHAR(255) UNIQUE NOT NULL,
   has_voted BOOLEAN DEFAULT false,
   whatsapp VARCHAR(255),
+  year VARCHAR(255),
+  field VARCHAR(255),
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 

@@ -63,6 +63,8 @@ export default function AdminPage() {
   // Voter states
   const [studentId, setStudentId] = useState('')
   const [name, setName] = useState('')
+  const [year, setYear] = useState('')
+  const [field, setField] = useState('')
   const [copiedCode, setCopiedCode] = useState<string | null>(null)
   const [showAddForm, setShowAddForm] = useState(false)
   const [newVoterCode, setNewVoterCode] = useState<string | null>(null)
@@ -105,10 +107,12 @@ export default function AdminPage() {
         return
       }
       
-      const code = await addVoter(studentId, name)
+      const code = await addVoter(studentId, name, year || undefined, field || undefined)
       setNewVoterCode(code)
       setStudentId('')
       setName('')
+      setYear('')
+      setField('')
       setShowAddForm(false)
       
       // Réinitialiser le code affiché après 5 secondes
@@ -882,6 +886,30 @@ export default function AdminPage() {
                     className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-bordeaux-500 focus:ring-2 focus:ring-bordeaux-200 transition-all outline-none"
                     placeholder="2024001"
                     required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Année d'études
+                  </label>
+                  <input
+                    type="text"
+                    value={year}
+                    onChange={(e) => setYear(e.target.value)}
+                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-bordeaux-500 focus:ring-2 focus:ring-bordeaux-200 transition-all outline-none"
+                    placeholder="1ère année, 2ème année, etc."
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Filière
+                  </label>
+                  <input
+                    type="text"
+                    value={field}
+                    onChange={(e) => setField(e.target.value)}
+                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-bordeaux-500 focus:ring-2 focus:ring-bordeaux-200 transition-all outline-none"
+                    placeholder="Informatique, Génie Civil, etc."
                   />
                 </div>
               </div>
