@@ -32,7 +32,8 @@ import {
   Award,
   MessageCircle,
   Filter,
-  ArrowUpDown
+  ArrowUpDown,
+  Search
 } from 'lucide-react'
 import Link from 'next/link'
 import Image from 'next/image'
@@ -76,6 +77,7 @@ export default function AdminPage() {
   const [filterField, setFilterField] = useState<string>('')
   const [filterYear, setFilterYear] = useState<string>('')
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc')
+  const [searchTerm, setSearchTerm] = useState<string>('')
   
   // Candidate states
   const [showCandidateForm, setShowCandidateForm] = useState(false)
@@ -112,8 +114,23 @@ export default function AdminPage() {
   // Filter and sort voters
   const filteredAndSortedVoters = voters
     .filter(voter => {
+      // Filter by field
       if (filterField && voter.field !== filterField) return false
+      // Filter by year
       if (filterYear && voter.year !== filterYear) return false
+      // Search filter (case-insensitive)
+      if (searchTerm) {
+        const searchLower = searchTerm.toLowerCase()
+        const matchesName = voter.name.toLowerCase().includes(searchLower)
+        const matchesStudentId = voter.studentId.toLowerCase().includes(searchLower)
+        const matchesVoteCode = voter.voteCode.toLowerCase().includes(searchLower)
+        const matchesField = voter.field?.toLowerCase().includes(searchLower) || false
+        const matchesYear = voter.year?.toLowerCase().includes(searchLower) || false
+        
+        if (!matchesName && !matchesStudentId && !matchesVoteCode && !matchesField && !matchesYear) {
+          return false
+        }
+      }
       return true
     })
     .sort((a, b) => {
@@ -959,6 +976,26 @@ export default function AdminPage() {
             
             {/* Filters */}
             <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
+              {/* Search Bar */}
+              <div className="relative flex-1 sm:flex-initial min-w-[200px]">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <input
+                  type="text"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  placeholder="Rechercher (nom, code, filière...)"
+                  className="w-full pl-10 pr-4 py-2 border-2 border-gray-200 rounded-lg focus:border-bordeaux-500 focus:ring-2 focus:ring-bordeaux-200 transition-all outline-none text-sm"
+                />
+                {searchTerm && (
+                  <button
+                    onClick={() => setSearchTerm('')}
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
+
               {/* Filter by Field */}
               <div className="flex items-center space-x-2">
                 <Filter className="w-4 h-4 text-gray-600" />
@@ -997,11 +1034,12 @@ export default function AdminPage() {
               </button>
 
               {/* Clear Filters */}
-              {(filterField || filterYear) && (
+              {(filterField || filterYear || searchTerm) && (
                 <button
                   onClick={() => {
                     setFilterField('')
                     setFilterYear('')
+                    setSearchTerm('')
                   }}
                   className="px-3 py-2 text-sm text-gray-600 hover:text-gray-900 transition-colors"
                 >
