@@ -39,6 +39,7 @@ import { useCandidateStore, type Candidate } from '@/lib/candidateStore'
 import { useVoteStore } from '@/lib/voteStore'
 import { useElectionStore } from '@/lib/electionStore'
 import QRCodeDisplay from '@/components/QRCodeDisplay'
+import { votersData, generateStudentId } from '@/data/voters-import'
 
 export default function AdminPage() {
   const router = useRouter()
@@ -830,6 +831,16 @@ export default function AdminPage() {
                 <RotateCcw className="w-4 h-4" />
                 <span className="hidden sm:inline">Réinitialiser votes</span>
                 <span className="sm:hidden">Reset</span>
+              </motion.button>
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={handleImportVoters}
+                className="px-3 sm:px-4 py-2 bg-green-600 text-white text-sm sm:text-base rounded-lg hover:bg-green-700 transition-colors flex items-center space-x-2"
+              >
+                <Upload className="w-4 h-4" />
+                <span className="hidden sm:inline">Importer depuis PDF</span>
+                <span className="sm:hidden">Importer</span>
               </motion.button>
               <motion.button
                 whileHover={{ scale: 1.05 }}
