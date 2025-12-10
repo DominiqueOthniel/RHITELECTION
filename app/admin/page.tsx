@@ -890,7 +890,7 @@ export default function AdminPage() {
                 </div>
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Année d'études
+                    Année d&apos;études
                   </label>
                   <input
                     type="text"
