@@ -1223,7 +1223,7 @@ export default function AdminPage() {
 
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-2">
-                      Expérience *
+                      Points forts *
                     </label>
                     {candidateForm.experience.map((item, index) => (
                       <div key={index} className="flex items-center space-x-2 mb-2">
@@ -1232,7 +1232,7 @@ export default function AdminPage() {
                           value={item}
                           onChange={(e) => handleExperienceChange(index, e.target.value)}
                           className="flex-1 px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-bordeaux-500 focus:ring-2 focus:ring-bordeaux-200 transition-all outline-none"
-                          placeholder={`Expérience ${index + 1}`}
+                          placeholder={`Point fort ${index + 1}`}
                           required={index === 0}
                         />
                         {candidateForm.experience.length > 1 && (
@@ -1252,7 +1252,7 @@ export default function AdminPage() {
                       className="mt-2 px-4 py-2 text-bordeaux-600 hover:bg-bordeaux-50 rounded-lg transition-colors flex items-center space-x-2"
                     >
                       <Plus className="w-4 h-4" />
-                      <span>Ajouter une expérience</span>
+                      <span>Ajouter un point fort</span>
                     </button>
                   </div>
 

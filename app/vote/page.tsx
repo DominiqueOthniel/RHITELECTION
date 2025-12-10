@@ -552,7 +552,7 @@ export default function VotePage() {
                           <div className="mb-4 sm:mb-6">
                             <div className="flex items-center space-x-2 mb-2 sm:mb-3">
                               <Award className="w-3 h-3 sm:w-4 sm:h-4 text-bordeaux-600" />
-                              <h4 className="text-sm sm:text-base font-semibold text-gray-900">Expérience</h4>
+                              <h4 className="text-sm sm:text-base font-semibold text-gray-900">Points forts</h4>
                             </div>
                             <div className="space-y-2">
                               {candidate.experience.map((exp, idx) => (
