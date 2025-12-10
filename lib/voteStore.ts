@@ -12,7 +12,7 @@ export interface Vote {
 
 interface VoteStore {
   votes: Vote[]
-  addVote: (candidateId: string, voterCode: string) => Promise<void>
+  addVote: (candidateId: string, voterCode: string) => Promise<{ success: boolean; error?: any }>
   getVotesByCandidate: (candidateId: string) => number
   getTotalVotes: () => number
   clearAllVotes: () => void
@@ -25,6 +25,15 @@ export const useVoteStore = create<VoteStore>()(
       votes: [],
 
       addVote: async (candidateId: string, voterCode: string) => {
+        // D'abord synchroniser avec Supabase (vérifications côté serveur)
+        const result = await syncVoteToSupabase(candidateId, voterCode)
+        
+        // Si le vote a échoué côté serveur, ne pas l'ajouter localement
+        if (!result.success) {
+          return result
+        }
+        
+        // Si le vote a réussi, l'ajouter localement
         const newVote: Vote = {
           id: generateUUID(),
           candidateId,
@@ -34,8 +43,8 @@ export const useVoteStore = create<VoteStore>()(
         set((state) => ({
           votes: [...state.votes, newVote],
         }))
-        // Synchroniser avec Supabase
-        await syncVoteToSupabase(candidateId, voterCode)
+        
+        return { success: true }
       },
 
       getVotesByCandidate: (candidateId: string) => {

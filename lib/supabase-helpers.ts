@@ -123,8 +123,69 @@ export async function syncVoteToSupabase(
       }
     }
 
+    // VÉRIFICATION 1: Vérifier que le code existe dans la table voters
+    const { data: voter, error: voterError } = await supabase
+      .from('voters')
+      .select('id, has_voted')
+      .eq('vote_code', voterCode)
+      .single()
+
+    if (voterError || !voter) {
+      console.error('Code de vote invalide:', voterError)
+      return { 
+        success: false, 
+        error: { message: 'Code de vote invalide', code: 'INVALID_CODE' } 
+      }
+    }
+
+    // VÉRIFICATION 2: Vérifier que le votant n'a pas déjà voté
+    if (voter.has_voted) {
+      console.error('Ce code a déjà été utilisé pour voter')
+      return { 
+        success: false, 
+        error: { message: 'Ce code a déjà été utilisé pour voter', code: 'ALREADY_VOTED' } 
+      }
+    }
+
+    // VÉRIFICATION 3: Vérifier qu'il n'existe pas déjà un vote avec ce code pour cette élection
+    const { data: existingVote, error: checkError } = await supabase
+      .from('votes')
+      .select('id')
+      .eq('voter_code', voterCode)
+      .eq('election_id', activeElectionId || null)
+      .single()
+
+    if (checkError && checkError.code !== 'PGRST116') { // PGRST116 = no rows returned (c'est OK)
+      console.error('Erreur lors de la vérification du vote existant:', checkError)
+      return { success: false, error: checkError }
+    }
+
+    if (existingVote) {
+      console.error('Un vote existe déjà avec ce code pour cette élection')
+      return { 
+        success: false, 
+        error: { message: 'Un vote existe déjà avec ce code', code: 'DUPLICATE_VOTE' } 
+      }
+    }
+
+    // VÉRIFICATION 4: Vérifier que le candidat existe
+    const { data: candidate, error: candidateError } = await supabase
+      .from('candidates')
+      .select('id')
+      .eq('id', candidateId)
+      .single()
+
+    if (candidateError || !candidate) {
+      console.error('Candidat invalide:', candidateError)
+      return { 
+        success: false, 
+        error: { message: 'Candidat invalide', code: 'INVALID_CANDIDATE' } 
+      }
+    }
+
+    // TOUTES LES VÉRIFICATIONS SONT PASSÉES - Enregistrer le vote
     // @ts-ignore - Type issue avec Supabase
-    const { error } = await supabase
+    const { error: insertError } = await supabase
       .from('votes')
       .insert({
         candidate_id: candidateId,
@@ -132,9 +193,29 @@ export async function syncVoteToSupabase(
         election_id: activeElectionId || null,
       } as any)
 
-    if (error) {
-      console.error('Erreur lors de l\'enregistrement du vote:', error)
-      return { success: false, error }
+    if (insertError) {
+      // Si c'est une erreur de contrainte unique, le code a déjà voté
+      if (insertError.code === '23505') {
+        console.error('Contrainte unique violée - le code a déjà voté')
+        return { 
+          success: false, 
+          error: { message: 'Ce code a déjà été utilisé pour voter', code: 'ALREADY_VOTED' } 
+        }
+      }
+      console.error('Erreur lors de l\'enregistrement du vote:', insertError)
+      return { success: false, error: insertError }
+    }
+
+    // Mettre à jour has_voted dans la table voters
+    const { error: updateError } = await supabase
+      .from('voters')
+      .update({ has_voted: true })
+      .eq('vote_code', voterCode)
+
+    if (updateError) {
+      console.error('Erreur lors de la mise à jour du statut de vote:', updateError)
+      // Le vote a été enregistré mais la mise à jour a échoué - c'est un problème mais on retourne quand même success
+      // car le vote est valide
     }
 
     return { success: true }

@@ -213,16 +213,53 @@ export default function VotePage() {
     }
     
     if (selectedCandidate && voteCode) {
-      // Enregistrer le vote
-      await addVote(selectedCandidate, voteCode.toUpperCase())
-      // Marquer le code comme utilisé
-      await markAsVoted(voteCode.toUpperCase())
-      setStep('confirm')
-      
-      // Rediriger automatiquement vers les statistiques après 3 secondes
-      setTimeout(() => {
-        router.push('/')
-      }, 3000)
+      try {
+        // Vérifier une dernière fois que le votant n'a pas déjà voté
+        const voter = getVoterByCode(voteCode.toUpperCase())
+        if (!voter) {
+          setError('Code de vote invalide. Veuillez vérifier votre code.')
+          setIsAuthenticated(false)
+          setShowAuthModal(true)
+          return
+        }
+        
+        if (voter.hasVoted) {
+          setError('Ce code a déjà été utilisé pour voter. Chaque code ne peut être utilisé qu\'une seule fois.')
+          setIsAuthenticated(false)
+          setShowAuthModal(true)
+          return
+        }
+
+        // Enregistrer le vote (cette fonction vérifie aussi côté serveur)
+        const result = await addVote(selectedCandidate, voteCode.toUpperCase())
+        
+        // Si le vote a échoué (code déjà utilisé côté serveur)
+        if (result && !result.success) {
+          const errorMessage = result.error?.message || 'Erreur lors de l\'enregistrement du vote'
+          if (result.error?.code === 'ALREADY_VOTED' || result.error?.code === 'DUPLICATE_VOTE') {
+            setError('Ce code a déjà été utilisé pour voter. Chaque code ne peut être utilisé qu\'une seule fois.')
+          } else {
+            setError(errorMessage)
+          }
+          setIsAuthenticated(false)
+          setShowAuthModal(true)
+          return
+        }
+        
+        // Marquer le code comme utilisé localement
+        await markAsVoted(voteCode.toUpperCase())
+        setStep('confirm')
+        
+        // Rediriger automatiquement vers les statistiques après 3 secondes
+        setTimeout(() => {
+          router.push('/')
+        }, 3000)
+      } catch (error) {
+        console.error('Erreur lors du vote:', error)
+        setError('Une erreur est survenue lors de l\'enregistrement de votre vote. Veuillez réessayer.')
+        setIsAuthenticated(false)
+        setShowAuthModal(true)
+      }
     }
   }
 
