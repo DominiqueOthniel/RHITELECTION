@@ -323,7 +323,7 @@ export default function VotePage() {
             className="inline-flex items-center space-x-2 bg-bordeaux-50 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full mb-3 sm:mb-4"
           >
             <Sparkles className="w-3 h-3 sm:w-4 sm:h-4 text-bordeaux-600" />
-            <span className="text-xs sm:text-sm font-semibold text-bordeaux-700">Élection 2024</span>
+            <span className="text-xs sm:text-sm font-semibold text-bordeaux-700">Élection 2025</span>
           </motion.div>
           <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-gray-900 mb-2 sm:mb-3 px-2">
             Élection du{' '}

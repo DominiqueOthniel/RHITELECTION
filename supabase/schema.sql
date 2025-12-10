@@ -307,6 +307,6 @@ $$ LANGUAGE plpgsql;
 
 -- Créer une élection par défaut
 INSERT INTO elections (name, is_active)
-VALUES ('Élection RHIT 2024', true)
+VALUES ('Élection RHIT 2025', true)
 ON CONFLICT DO NOTHING;
 
