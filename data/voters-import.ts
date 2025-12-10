@@ -3,7 +3,7 @@
 
 export interface VoterImportData {
   name: string
-  studentId: string // Généré automatiquement si non fourni
+  studentId?: string // Généré automatiquement si non fourni
   year: string // Année d'études
   field: string // Filière
 }
