@@ -16,7 +16,7 @@ export interface Voter {
 
 interface VoterStore {
   voters: Voter[]
-  addVoter: (studentId: string, email: string, name: string, whatsapp?: string) => Promise<string>
+  addVoter: (studentId: string, name: string) => Promise<string>
   getVoterByCode: (code: string) => Voter | undefined
   markAsVoted: (code: string) => Promise<void>
   deleteVoter: (id: string) => Promise<void>
@@ -52,16 +52,15 @@ export const useVoterStore = create<VoterStore>()(
     (set, get) => ({
       voters: [],
 
-      addVoter: async (studentId: string, email: string, name: string, whatsapp?: string) => {
+      addVoter: async (studentId: string, name: string) => {
         const code = generateVoteCode()
         const newVoter: Voter = {
           id: generateUUID(),
           studentId,
-          email,
+          email: '', // Email non requis
           name,
           voteCode: code,
           hasVoted: false,
-          whatsapp,
           createdAt: new Date().toISOString(),
         }
         set((state) => ({

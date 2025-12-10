@@ -62,9 +62,7 @@ export default function AdminPage() {
   
   // Voter states
   const [studentId, setStudentId] = useState('')
-  const [email, setEmail] = useState('')
   const [name, setName] = useState('')
-  const [whatsapp, setWhatsapp] = useState('')
   const [copiedCode, setCopiedCode] = useState<string | null>(null)
   const [showAddForm, setShowAddForm] = useState(false)
   const [newVoterCode, setNewVoterCode] = useState<string | null>(null)
@@ -100,19 +98,17 @@ export default function AdminPage() {
 
   const handleAddVoter = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (studentId && email && name) {
+    if (studentId && name) {
       // Vérifier si le numéro étudiant existe déjà
       if (voters.some(v => v.studentId === studentId)) {
         alert('Ce numéro étudiant est déjà enregistré!')
         return
       }
       
-      const code = await addVoter(studentId, email, name, whatsapp || undefined)
+      const code = await addVoter(studentId, name)
       setNewVoterCode(code)
       setStudentId('')
-      setEmail('')
       setName('')
-      setWhatsapp('')
       setShowAddForm(false)
       
       // Réinitialiser le code affiché après 5 secondes
@@ -861,10 +857,10 @@ export default function AdminPage() {
               onSubmit={handleAddVoter}
               className="border-2 border-bordeaux-200 rounded-xl p-4 sm:p-6 space-y-4"
             >
-              <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-4">
+              <div className="grid sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Nom complet
+                    Nom complet *
                   </label>
                   <input
                     type="text"
@@ -877,7 +873,7 @@ export default function AdminPage() {
                 </div>
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Numéro étudiant
+                    Numéro étudiant *
                   </label>
                   <input
                     type="text"
@@ -886,31 +882,6 @@ export default function AdminPage() {
                     className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-bordeaux-500 focus:ring-2 focus:ring-bordeaux-200 transition-all outline-none"
                     placeholder="2024001"
                     required
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Email universitaire
-                  </label>
-                  <input
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-bordeaux-500 focus:ring-2 focus:ring-bordeaux-200 transition-all outline-none"
-                    placeholder="jean.dupont@rhit.edu"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    WhatsApp (optionnel)
-                  </label>
-                  <input
-                    type="text"
-                    value={whatsapp}
-                    onChange={(e) => setWhatsapp(e.target.value)}
-                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-bordeaux-500 focus:ring-2 focus:ring-bordeaux-200 transition-all outline-none"
-                    placeholder="+33 6 12 34 56 78"
                   />
                 </div>
               </div>
