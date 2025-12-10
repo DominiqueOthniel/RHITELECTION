@@ -212,13 +212,28 @@ export default function AdminPage() {
   }
 
   const handleResetVoteStats = async () => {
-    if (confirm('Êtes-vous sûr de vouloir réinitialiser toutes les statistiques de vote ?\n\nCette action va :\n- Supprimer tous les votes enregistrés\n- Réinitialiser le statut "a voté" de tous les votants\n- Réinitialiser la date de fin de l\'élection\n- Permettre de démarrer un nouveau cycle d\'élection\n\nCette action est irréversible.')) {
-      clearAllVotes()
-      await resetVoteStats()
-      await setEndDate(null) // Réinitialiser la date de fin pour permettre un nouveau cycle
-      setElectionEndDate('')
-      setElectionEndTime('')
-      alert('Les statistiques de vote ont été réinitialisées avec succès. Vous pouvez maintenant configurer une nouvelle date de fin pour le prochain cycle d\'élection.')
+    if (confirm('Êtes-vous sûr de vouloir réinitialiser toutes les statistiques de vote ?\n\nCette action va :\n- Supprimer tous les votes enregistrés\n- Réinitialiser le statut "a voté" de tous les votants\n- Réinitialiser les codes de vote (pour permettre de revoter)\n- Réinitialiser la date de fin de l\'élection\n- Permettre de démarrer un nouveau cycle d\'élection\n\nCette action est irréversible.')) {
+      try {
+        // 1. Supprimer tous les votes de Supabase
+        await clearAllVotes()
+        
+        // 2. Réinitialiser les statuts des votants et les codes de vote
+        await resetVoteStats()
+        
+        // 3. Réinitialiser la date de fin
+        await setEndDate(null)
+        setElectionEndDate('')
+        setElectionEndTime('')
+        
+        // 4. Re-synchroniser les données depuis Supabase pour mettre à jour l'affichage
+        await syncVotesFromSupabase()
+        await syncVotersFromSupabase()
+        
+        alert('Les statistiques de vote ont été réinitialisées avec succès. Vous pouvez maintenant configurer une nouvelle date de fin pour le prochain cycle d\'élection.')
+      } catch (error) {
+        console.error('Erreur lors de la réinitialisation:', error)
+        alert('Une erreur est survenue lors de la réinitialisation. Veuillez réessayer.')
+      }
     }
   }
 

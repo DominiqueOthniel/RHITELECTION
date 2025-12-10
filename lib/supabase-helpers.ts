@@ -653,6 +653,27 @@ export async function deleteAllVotes() {
   }
 }
 
+export async function resetAllVoterCodes() {
+  try {
+    // Réinitialiser tous les codes de vote (mettre is_used à false)
+    const supabaseClient = supabase as any
+    const { error } = await supabaseClient
+      .from('voter_codes')
+      .update({ is_used: false, used_at: null })
+      .neq('id', '00000000-0000-0000-0000-000000000000') // Mettre à jour tous
+
+    if (error) {
+      console.error('Erreur lors de la réinitialisation des codes de vote:', error)
+      return { success: false, error }
+    }
+
+    return { success: true }
+  } catch (error) {
+    console.error('Erreur inattendue lors de la réinitialisation des codes:', error)
+    return { success: false, error }
+  }
+}
+
 export async function deleteAllData() {
   try {
     // Supprimer dans l'ordre (votes d'abord à cause des foreign keys)
