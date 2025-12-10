@@ -30,7 +30,9 @@ import {
   Trophy,
   Medal,
   Award,
-  MessageCircle
+  MessageCircle,
+  Filter,
+  ArrowUpDown
 } from 'lucide-react'
 import Link from 'next/link'
 import Image from 'next/image'
@@ -39,7 +41,6 @@ import { useCandidateStore, type Candidate } from '@/lib/candidateStore'
 import { useVoteStore } from '@/lib/voteStore'
 import { useElectionStore } from '@/lib/electionStore'
 import QRCodeDisplay from '@/components/QRCodeDisplay'
-import { votersData, generateStudentId } from '@/data/voters-import'
 
 export default function AdminPage() {
   const router = useRouter()
@@ -71,6 +72,11 @@ export default function AdminPage() {
   const [newVoterCode, setNewVoterCode] = useState<string | null>(null)
   const [showQRCode, setShowQRCode] = useState<string | null>(null)
   
+  // Filter states
+  const [filterField, setFilterField] = useState<string>('')
+  const [filterYear, setFilterYear] = useState<string>('')
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc')
+  
   // Candidate states
   const [showCandidateForm, setShowCandidateForm] = useState(false)
   const [editingCandidate, setEditingCandidate] = useState<Candidate | null>(null)
@@ -98,6 +104,25 @@ export default function AdminPage() {
   })
 
   const stats = getVoterStats()
+
+  // Get unique fields and years for filters
+  const uniqueFields = Array.from(new Set(voters.map(v => v.field).filter(Boolean))).sort()
+  const uniqueYears = Array.from(new Set(voters.map(v => v.year).filter(Boolean))).sort()
+
+  // Filter and sort voters
+  const filteredAndSortedVoters = voters
+    .filter(voter => {
+      if (filterField && voter.field !== filterField) return false
+      if (filterYear && voter.year !== filterYear) return false
+      return true
+    })
+    .sort((a, b) => {
+      if (sortOrder === 'asc') {
+        return a.name.localeCompare(b.name, 'fr', { sensitivity: 'base' })
+      } else {
+        return b.name.localeCompare(a.name, 'fr', { sensitivity: 'base' })
+      }
+    })
 
   const handleAddVoter = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -151,11 +176,12 @@ export default function AdminPage() {
   }
 
   const handleExportCSV = () => {
-    const headers = ['Nom', 'Numéro étudiant', 'Email', 'Code de vote', 'Statut']
+    const headers = ['Nom', 'Numéro étudiant', 'Année d\'études', 'Filière', 'Code de vote', 'Statut']
     const rows = voters.map(v => [
       v.name,
       v.studentId,
-      v.email,
+      v.year || 'N/A',
+      v.field || 'N/A',
       v.voteCode,
       v.hasVoted ? 'A voté' : 'En attente'
     ])
@@ -166,44 +192,6 @@ export default function AdminPage() {
     link.href = URL.createObjectURL(blob)
     link.download = `votants_${new Date().toISOString().split('T')[0]}.csv`
     link.click()
-  }
-
-  const handleImportVoters = async () => {
-    if (!confirm(`Êtes-vous sûr de vouloir importer ${votersData.length} votants depuis la liste des examens ?\n\nCette action va créer tous les votants avec leurs filières et années d&apos;études.`)) {
-      return
-    }
-
-    try {
-      let imported = 0
-      let skipped = 0
-      let errors = 0
-
-      for (let i = 0; i < votersData.length; i++) {
-        const voterData = votersData[i]
-        try {
-          // Générer un ID étudiant unique
-          const studentId = generateStudentId(i)
-          
-          // Vérifier si le numéro étudiant existe déjà
-          if (voters.some(v => v.studentId === studentId)) {
-            skipped++
-            continue
-          }
-
-          // Ajouter le votant
-          await addVoter(studentId, voterData.name, voterData.year, voterData.field)
-          imported++
-        } catch (error) {
-          console.error(`Erreur lors de l'import du votant ${voterData.name}:`, error)
-          errors++
-        }
-      }
-
-      alert(`Import terminé !\n\n✅ ${imported} votants importés\n⚠️ ${skipped} votants ignorés (déjà existants)\n❌ ${errors} erreurs`)
-    } catch (error) {
-      console.error('Erreur lors de l\'import:', error)
-      alert('Une erreur est survenue lors de l\'import des votants.')
-    }
   }
 
   const handleResetVoteStats = async () => {
@@ -873,16 +861,6 @@ export default function AdminPage() {
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
-                onClick={handleImportVoters}
-                className="px-3 sm:px-4 py-2 bg-green-600 text-white text-sm sm:text-base rounded-lg hover:bg-green-700 transition-colors flex items-center space-x-2"
-              >
-                <Upload className="w-4 h-4" />
-                <span className="hidden sm:inline">Importer depuis PDF</span>
-                <span className="sm:hidden">Importer</span>
-              </motion.button>
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
                 onClick={handleExportCSV}
                 className="px-3 sm:px-4 py-2 bg-gray-100 text-gray-700 text-sm sm:text-base rounded-lg hover:bg-gray-200 transition-colors flex items-center space-x-2"
               >
@@ -976,7 +954,70 @@ export default function AdminPage() {
 
         {/* Voters List */}
         <div className="bg-white rounded-2xl shadow-xl p-4 sm:p-6 md:p-8">
-          <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-4 sm:mb-6">Liste des votants</h3>
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 sm:mb-6 gap-4">
+            <h3 className="text-lg sm:text-xl font-bold text-gray-900">Liste des votants</h3>
+            
+            {/* Filters */}
+            <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
+              {/* Filter by Field */}
+              <div className="flex items-center space-x-2">
+                <Filter className="w-4 h-4 text-gray-600" />
+                <select
+                  value={filterField}
+                  onChange={(e) => setFilterField(e.target.value)}
+                  className="px-3 py-2 border-2 border-gray-200 rounded-lg focus:border-bordeaux-500 focus:ring-2 focus:ring-bordeaux-200 transition-all outline-none text-sm"
+                >
+                  <option value="">Toutes les filières</option>
+                  {uniqueFields.map(field => (
+                    <option key={field} value={field}>{field}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Filter by Year */}
+              <select
+                value={filterYear}
+                onChange={(e) => setFilterYear(e.target.value)}
+                className="px-3 py-2 border-2 border-gray-200 rounded-lg focus:border-bordeaux-500 focus:ring-2 focus:ring-bordeaux-200 transition-all outline-none text-sm"
+              >
+                <option value="">Toutes les années</option>
+                {uniqueYears.map(year => (
+                  <option key={year} value={year}>{year}</option>
+                ))}
+              </select>
+
+              {/* Sort Order */}
+              <button
+                onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
+                className="px-3 py-2 border-2 border-gray-200 rounded-lg hover:border-bordeaux-500 hover:bg-bordeaux-50 transition-all flex items-center space-x-2 text-sm"
+                title={`Trier par ordre ${sortOrder === 'asc' ? 'décroissant' : 'croissant'}`}
+              >
+                <ArrowUpDown className="w-4 h-4 text-gray-600" />
+                <span className="hidden sm:inline">{sortOrder === 'asc' ? 'A-Z' : 'Z-A'}</span>
+              </button>
+
+              {/* Clear Filters */}
+              {(filterField || filterYear) && (
+                <button
+                  onClick={() => {
+                    setFilterField('')
+                    setFilterYear('')
+                  }}
+                  className="px-3 py-2 text-sm text-gray-600 hover:text-gray-900 transition-colors"
+                >
+                  Réinitialiser
+                </button>
+              )}
+            </div>
+          </div>
+
+          <div className="mb-4 text-sm text-gray-600">
+            {filteredAndSortedVoters.length} votant{filteredAndSortedVoters.length > 1 ? 's' : ''} affiché{filteredAndSortedVoters.length > 1 ? 's' : ''}
+            {voters.length !== filteredAndSortedVoters.length && (
+              <span className="ml-2">(sur {voters.length} total)</span>
+            )}
+          </div>
+
           {voters.length === 0 ? (
             <div className="text-center py-8 sm:py-12">
               <Users className="w-12 h-12 sm:w-16 sm:h-16 text-gray-300 mx-auto mb-3 sm:mb-4" />
@@ -990,14 +1031,15 @@ export default function AdminPage() {
                     <tr className="border-b-2 border-gray-200">
                       <th className="text-left py-3 sm:py-4 px-3 sm:px-4 text-xs sm:text-sm font-semibold text-gray-700">Nom</th>
                       <th className="text-left py-3 sm:py-4 px-3 sm:px-4 text-xs sm:text-sm font-semibold text-gray-700 hidden md:table-cell">Numéro étudiant</th>
-                      <th className="text-left py-3 sm:py-4 px-3 sm:px-4 text-xs sm:text-sm font-semibold text-gray-700 hidden lg:table-cell">Email</th>
+                      <th className="text-left py-3 sm:py-4 px-3 sm:px-4 text-xs sm:text-sm font-semibold text-gray-700 hidden lg:table-cell">Année d&apos;études</th>
+                      <th className="text-left py-3 sm:py-4 px-3 sm:px-4 text-xs sm:text-sm font-semibold text-gray-700 hidden lg:table-cell">Filière</th>
                       <th className="text-left py-3 sm:py-4 px-3 sm:px-4 text-xs sm:text-sm font-semibold text-gray-700">Code</th>
                       <th className="text-left py-3 sm:py-4 px-3 sm:px-4 text-xs sm:text-sm font-semibold text-gray-700">Statut</th>
                       <th className="text-left py-3 sm:py-4 px-3 sm:px-4 text-xs sm:text-sm font-semibold text-gray-700">Actions</th>
                     </tr>
                   </thead>
                 <tbody>
-                  {voters.map((voter, index) => (
+                  {filteredAndSortedVoters.map((voter, index) => (
                     <motion.tr
                       key={voter.id}
                       initial={{ opacity: 0, x: -20 }}
@@ -1008,10 +1050,12 @@ export default function AdminPage() {
                       <td className="py-3 sm:py-4 px-3 sm:px-4 font-medium text-gray-900 text-sm">
                         <div className="font-semibold">{voter.name}</div>
                         <div className="text-xs text-gray-500 md:hidden mt-1">{voter.studentId}</div>
-                        <div className="text-xs text-gray-500 lg:hidden mt-1 truncate">{voter.email}</div>
+                        <div className="text-xs text-gray-500 lg:hidden mt-1">{voter.year || 'N/A'}</div>
+                        <div className="text-xs text-gray-500 lg:hidden mt-1 truncate">{voter.field || 'N/A'}</div>
                       </td>
                       <td className="py-3 sm:py-4 px-3 sm:px-4 text-gray-600 text-sm hidden md:table-cell">{voter.studentId}</td>
-                      <td className="py-3 sm:py-4 px-3 sm:px-4 text-gray-600 text-sm hidden lg:table-cell truncate max-w-xs">{voter.email}</td>
+                      <td className="py-3 sm:py-4 px-3 sm:px-4 text-gray-600 text-sm hidden lg:table-cell">{voter.year || 'N/A'}</td>
+                      <td className="py-3 sm:py-4 px-3 sm:px-4 text-gray-600 text-sm hidden lg:table-cell truncate max-w-xs">{voter.field || 'N/A'}</td>
                       <td className="py-3 sm:py-4 px-3 sm:px-4">
                         <div className="flex items-center space-x-1 sm:space-x-2">
                           <code className="bg-gray-100 text-gray-800 px-2 sm:px-3 py-1 rounded font-mono text-xs sm:text-sm">
