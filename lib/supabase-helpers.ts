@@ -139,7 +139,8 @@ export async function syncVoteToSupabase(
     }
 
     // VÉRIFICATION 2: Vérifier que le votant n'a pas déjà voté
-    if (voter.has_voted) {
+    const voterData = voter as { id: string; has_voted: boolean }
+    if (voterData.has_voted) {
       console.error('Ce code a déjà été utilisé pour voter')
       return { 
         success: false, 
@@ -148,12 +149,18 @@ export async function syncVoteToSupabase(
     }
 
     // VÉRIFICATION 3: Vérifier qu'il n'existe pas déjà un vote avec ce code pour cette élection
-    const { data: existingVote, error: checkError } = await supabase
+    let voteQuery: any = supabase
       .from('votes')
       .select('id')
       .eq('voter_code', voterCode)
-      .eq('election_id', activeElectionId || null)
-      .single()
+    
+    if (activeElectionId) {
+      voteQuery = voteQuery.eq('election_id', activeElectionId)
+    } else {
+      voteQuery = voteQuery.is('election_id', null)
+    }
+    
+    const { data: existingVote, error: checkError } = await voteQuery.single()
 
     if (checkError && checkError.code !== 'PGRST116') { // PGRST116 = no rows returned (c'est OK)
       console.error('Erreur lors de la vérification du vote existant:', checkError)
@@ -207,7 +214,8 @@ export async function syncVoteToSupabase(
     }
 
     // Mettre à jour has_voted dans la table voters
-    const { error: updateError } = await supabase
+    const supabaseClient = supabase as any
+    const { error: updateError } = await supabaseClient
       .from('voters')
       .update({ has_voted: true })
       .eq('vote_code', voterCode)
