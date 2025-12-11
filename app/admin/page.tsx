@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import { 
@@ -229,6 +229,11 @@ export default function AdminPage() {
         await syncVotesFromSupabase()
         await syncVotersFromSupabase()
         
+        // 5. Forcer la mise à jour du classement après un court délai pour s'assurer que le store est à jour
+        setTimeout(() => {
+          updateRanking()
+        }, 100)
+        
         alert('Les statistiques de vote ont été réinitialisées avec succès. Vous pouvez maintenant configurer une nouvelle date de fin pour le prochain cycle d\'élection.')
       } catch (error) {
         console.error('Erreur lors de la réinitialisation:', error)
@@ -333,37 +338,38 @@ export default function AdminPage() {
     }
   }, [router])
 
+  // Fonction pour mettre à jour le classement
+  const updateRanking = useCallback(() => {
+    if (candidates.length > 0) {
+      const totalVotes = getTotalVotes()
+      const rankingData = candidates
+        .map((candidate) => {
+          const votes = getVotesByCandidate(candidate.id)
+          const percentage = totalVotes > 0 ? Math.round((votes / totalVotes) * 100) : 0
+          return {
+            id: candidate.id,
+            name: candidate.name,
+            position: candidate.position,
+            votes,
+            percentage,
+            image: candidate.image,
+            initials: candidate.initials,
+          }
+        })
+        .sort((a, b) => b.votes - a.votes)
+      
+      setRanking(rankingData)
+    }
+  }, [candidates, getVotesByCandidate, getTotalVotes])
+
   // Mise à jour du classement en temps réel
   useEffect(() => {
-    const updateRanking = () => {
-      if (candidates.length > 0) {
-        const totalVotes = getTotalVotes()
-        const rankingData = candidates
-          .map((candidate) => {
-            const votes = getVotesByCandidate(candidate.id)
-            const percentage = totalVotes > 0 ? Math.round((votes / totalVotes) * 100) : 0
-            return {
-              id: candidate.id,
-              name: candidate.name,
-              position: candidate.position,
-              votes,
-              percentage,
-              image: candidate.image,
-              initials: candidate.initials,
-            }
-          })
-          .sort((a, b) => b.votes - a.votes)
-        
-        setRanking(rankingData)
-      }
-    }
-
     updateRanking()
     // Mettre à jour toutes les secondes pour un affichage en temps réel
     const interval = setInterval(updateRanking, 1000)
 
     return () => clearInterval(interval)
-  }, [candidates, getVotesByCandidate, getTotalVotes, votes])
+  }, [updateRanking, votes])
 
   const handleAddProgramItem = () => {
     setCandidateForm({ ...candidateForm, program: [...candidateForm.program, ''] })
