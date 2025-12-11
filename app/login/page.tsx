@@ -17,13 +17,8 @@ export default function LoginPage() {
 
   useEffect(() => {
     setMounted(true)
-    // Vérifier si l'utilisateur est déjà connecté
-    if (typeof window !== 'undefined') {
-      const isLoggedIn = sessionStorage.getItem('admin_logged_in')
-      if (isLoggedIn === 'true') {
-        router.push('/admin')
-      }
-    }
+    // Rediriger directement vers la page admin (authentification désactivée)
+    router.push('/admin')
   }, [router])
 
   const handleLogin = async (e: React.FormEvent) => {

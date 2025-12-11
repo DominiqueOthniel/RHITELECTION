@@ -288,11 +288,7 @@ function AdminPageContent() {
   }
 
   const handleLogout = () => {
-    if (confirm('Voulez-vous vous déconnecter ?')) {
-      sessionStorage.removeItem('admin_logged_in')
-      sessionStorage.removeItem('admin_username')
-      router.push('/login')
-    }
+    // Authentification désactivée - pas de déconnexion nécessaire
   }
 
   const timeRemaining = getTimeRemaining()
@@ -381,22 +377,9 @@ function AdminPageContent() {
     }
   }
 
-  // Vérifier l'authentification et synchroniser les données
+  // Synchroniser les données (authentification désactivée)
   useEffect(() => {
     const init = async () => {
-      // TOUJOURS vérifier si l'utilisateur est connecté (protection obligatoire)
-      if (typeof window !== 'undefined') {
-        const isLoggedIn = sessionStorage.getItem('admin_logged_in')
-        if (isLoggedIn !== 'true') {
-          router.push('/login')
-          return
-        }
-      } else {
-        // Si window n'est pas disponible, rediriger vers login
-        router.push('/login')
-        return
-      }
-
       setMounted(true)
       // Forcer la synchronisation depuis Supabase
       await initializeDefaultCandidates() // Charge les candidats depuis Supabase
@@ -413,38 +396,7 @@ function AdminPageContent() {
       }
     }
     init()
-  }, [router, initializeDefaultCandidates, syncVotersFromSupabase, syncVotesFromSupabase, syncElectionFromSupabase, endDate])
-
-  // Vérification périodique de l'authentification (toutes les 30 secondes)
-  useEffect(() => {
-    const checkAuth = () => {
-      if (typeof window !== 'undefined') {
-        const isLoggedIn = sessionStorage.getItem('admin_logged_in')
-        if (isLoggedIn !== 'true') {
-          router.push('/login')
-        }
-      }
-    }
-
-    // Vérifier immédiatement
-    checkAuth()
-    
-    // Vérifier toutes les 30 secondes
-    const authInterval = setInterval(checkAuth, 30000)
-
-    // Vérifier aussi quand la fenêtre redevient visible
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible') {
-        checkAuth()
-      }
-    }
-    document.addEventListener('visibilitychange', handleVisibilityChange)
-
-    return () => {
-      clearInterval(authInterval)
-      document.removeEventListener('visibilitychange', handleVisibilityChange)
-    }
-  }, [router])
+  }, [initializeDefaultCandidates, syncVotersFromSupabase, syncVotesFromSupabase, syncElectionFromSupabase, endDate])
 
   // Fonction pour mettre à jour le classement
   const updateRanking = useCallback(() => {
