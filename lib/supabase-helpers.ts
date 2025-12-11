@@ -191,10 +191,15 @@ export async function syncVoteToSupabase(
     }
 
     // TOUTES LES VÉRIFICATIONS SONT PASSÉES - Enregistrer le vote
+    // Générer un ID pour le vote
+    const { generateUUID } = await import('./utils')
+    const voteId = generateUUID()
+    
     // @ts-ignore - Type issue avec Supabase
     const { error: insertError } = await supabase
       .from('votes')
       .insert({
+        id: voteId,
         candidate_id: candidateId,
         voter_code: voterCode,
         election_id: activeElectionId || null,
