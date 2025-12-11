@@ -89,3 +89,4 @@ Exécutez le script dans l'éditeur SQL de Supabase :
 - La validation est effectuée **côté serveur** pour garantir la sécurité
 - Les erreurs sont **propagées** à l'interface utilisateur pour un feedback clair
 
+

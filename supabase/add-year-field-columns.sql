@@ -16,3 +16,4 @@ WHERE table_name = 'voters'
   AND column_name IN ('year', 'field')
 ORDER BY column_name;
 
+

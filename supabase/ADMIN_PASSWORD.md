@@ -39,3 +39,4 @@ WHERE username = 'admin';
 - L'authentification est vérifiée à chaque accès à la page admin
 - La session expire quand l'onglet est fermé (sessionStorage)
 
+

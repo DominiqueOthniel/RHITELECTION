@@ -514,3 +514,4 @@ BEGIN
   RAISE NOTICE '✅ Une élection par défaut a été créée!';
 END $$;
 
+

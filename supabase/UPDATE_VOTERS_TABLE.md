@@ -42,3 +42,4 @@ Une fois la table créée, tous les nouveaux votants seront automatiquement sync
 - **Temps réel** : Toutes les modifications sont immédiatement synchronisées
 
 
+
