@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import { 
@@ -43,7 +43,8 @@ import { useVoteStore } from '@/lib/voteStore'
 import { useElectionStore } from '@/lib/electionStore'
 import QRCodeDisplay from '@/components/QRCodeDisplay'
 
-export default function AdminPage() {
+// Composant interne pour utiliser useSearchParams avec Suspense
+function AdminPageContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const showAutoVote = searchParams.get('showAutoVote') === 'true'
@@ -1908,6 +1909,22 @@ export default function AdminPage() {
         </AnimatePresence>
       </div>
     </div>
+  )
+}
+
+// Composant wrapper avec Suspense
+export default function AdminPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gradient-to-br from-white via-gray-50 to-white flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-bordeaux-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Chargement...</p>
+        </div>
+      </div>
+    }>
+      <AdminPageContent />
+    </Suspense>
   )
 }
 
