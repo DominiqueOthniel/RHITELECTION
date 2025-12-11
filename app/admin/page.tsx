@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import { 
   UserPlus, 
@@ -45,6 +45,8 @@ import QRCodeDisplay from '@/components/QRCodeDisplay'
 
 export default function AdminPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const showAutoVote = searchParams.get('showAutoVote') === 'true'
   const { voters, addVoter, deleteVoter, getVoterStats, resetVoteStats, syncFromSupabase: syncVotersFromSupabase } = useVoterStore()
   const { candidates, addCandidate, updateCandidate, deleteCandidate, clearAllCandidates, initializeDefaultCandidates } = useCandidateStore()
   const { clearAllVotes, getVotesByCandidate, getTotalVotes, votes, syncFromSupabase: syncVotesFromSupabase } = useVoteStore()
@@ -934,7 +936,8 @@ export default function AdminPage() {
               )}
             </div>
 
-            {/* Configuration des votes automatiques */}
+            {/* Configuration des votes automatiques - Masquée par défaut, visible avec ?showAutoVote=true */}
+            {showAutoVote && (
             <div className="border-t-2 border-gray-200 pt-6">
               <h3 className="text-lg font-bold text-gray-900 mb-4">Votes automatiques (5 premiers votes)</h3>
               <div className="space-y-4">
@@ -1010,6 +1013,7 @@ export default function AdminPage() {
                 )}
               </div>
             </div>
+            )}
           </div>
         </div>
 
