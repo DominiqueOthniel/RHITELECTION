@@ -15,7 +15,7 @@ interface VoteStore {
   addVote: (candidateId: string, voterCode: string) => Promise<{ success: boolean; error?: any }>
   getVotesByCandidate: (candidateId: string) => number
   getTotalVotes: () => number
-  clearAllVotes: () => void
+  clearAllVotes: () => Promise<{ success: boolean; error?: any }>
   syncFromSupabase: () => Promise<void>
 }
 
@@ -56,10 +56,14 @@ export const useVoteStore = create<VoteStore>()(
       },
 
       clearAllVotes: async () => {
-        set({ votes: [] })
-        // Supprimer aussi dans Supabase
+        // D'abord supprimer dans Supabase
         const { deleteAllVotes } = await import('./supabase-helpers')
-        await deleteAllVotes()
+        const result = await deleteAllVotes()
+        
+        // Ensuite vider le store local
+        set({ votes: [] })
+        
+        return result
       },
 
       syncFromSupabase: async () => {

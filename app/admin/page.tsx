@@ -212,10 +212,14 @@ export default function AdminPage() {
   }
 
   const handleResetVoteStats = async () => {
-    if (confirm('Êtes-vous sûr de vouloir réinitialiser toutes les statistiques de vote ?\n\nCette action va :\n- Supprimer tous les votes enregistrés\n- Réinitialiser le statut "a voté" de tous les votants\n- Réinitialiser les codes de vote (pour permettre de revoter)\n- Réinitialiser la date de fin de l\'élection\n- Permettre de démarrer un nouveau cycle d\'élection\n\nCette action est irréversible.')) {
+    if (confirm('Êtes-vous sûr de vouloir réinitialiser toutes les statistiques de vote ?\n\nCette action va :\n- Supprimer TOUS les votes de Supabase\n- Réinitialiser le statut "a voté" de tous les votants\n- Réinitialiser les codes de vote (pour permettre de revoter)\n- Réinitialiser la date de fin de l\'élection\n- Permettre de démarrer un nouveau cycle d\'élection\n\nCette action est irréversible.')) {
       try {
-        // 1. Supprimer tous les votes de Supabase
-        await clearAllVotes()
+        // 1. Supprimer tous les votes de Supabase (et du store local)
+        const result = await clearAllVotes()
+        if (result && result.success === false) {
+          throw new Error('Échec de la suppression des votes dans Supabase')
+        }
+        console.log('✅ Tous les votes ont été supprimés de Supabase')
         
         // 2. Réinitialiser les statuts des votants et les codes de vote
         await resetVoteStats()
@@ -234,7 +238,7 @@ export default function AdminPage() {
           updateRanking()
         }, 100)
         
-        alert('Les statistiques de vote ont été réinitialisées avec succès. Vous pouvez maintenant configurer une nouvelle date de fin pour le prochain cycle d\'élection.')
+        alert('Les statistiques de vote ont été réinitialisées avec succès. Tous les votes ont été supprimés de Supabase. Vous pouvez maintenant configurer une nouvelle date de fin pour le prochain cycle d\'élection.')
       } catch (error) {
         console.error('Erreur lors de la réinitialisation:', error)
         alert('Une erreur est survenue lors de la réinitialisation. Veuillez réessayer.')

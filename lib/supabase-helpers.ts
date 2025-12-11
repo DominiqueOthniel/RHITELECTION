@@ -640,17 +640,20 @@ export async function deleteAllVoterCodes() {
 
 export async function deleteAllVotes() {
   try {
-    // @ts-ignore - Type issue avec Supabase
-    const { error } = await supabase
+    // Supprimer TOUS les votes de Supabase
+    // Utiliser une condition toujours vraie pour supprimer tous les enregistrements
+    const supabaseClient = supabase as any
+    const { error } = await supabaseClient
       .from('votes')
       .delete()
-      .neq('id', '00000000-0000-0000-0000-000000000000') // Supprimer tous
+      .neq('id', '') // Condition toujours vraie (id ne peut jamais être une chaîne vide)
 
     if (error) {
       console.error('Erreur lors de la suppression des votes:', error)
       return { success: false, error }
     }
 
+    console.log('✅ Tous les votes ont été supprimés de Supabase')
     return { success: true }
   } catch (error) {
     console.error('Erreur inattendue lors de la suppression:', error)
