@@ -378,8 +378,24 @@ function AdminPageContent() {
   }
 
   // Synchroniser les données (authentification désactivée)
+  // Vérification de l'authentification
+  useEffect(() => {
+    const isLoggedIn = sessionStorage.getItem('admin_logged_in')
+    if (isLoggedIn !== 'true') {
+      router.push('/login')
+      return
+    }
+  }, [router])
+
   useEffect(() => {
     const init = async () => {
+      // Vérifier à nouveau l'authentification avant d'initialiser
+      const isLoggedIn = sessionStorage.getItem('admin_logged_in')
+      if (isLoggedIn !== 'true') {
+        router.push('/login')
+        return
+      }
+      
       setMounted(true)
       // Forcer la synchronisation depuis Supabase
       await initializeDefaultCandidates() // Charge les candidats depuis Supabase
