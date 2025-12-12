@@ -81,7 +81,7 @@ VALUES
 -- ============================================
 -- CIVIL ENGINEERING 1
 -- ============================================
-INSERT INTO voters (id, student_id, email, name, vote_code, has_voted, year, field, created_at)
+INSERT INTO voters (id, student_id, name, vote_code, has_voted, year, field, created_at)
 VALUES
   (generate_voter_id(), '2025038', 'DOUALA BWEGNE OLIVIA SHELSY', generate_vote_code(), false, '1ère année', 'Civil Engineering', NOW()),
   (generate_voter_id(), '2025039', 'LATIFAH DALIL', generate_vote_code(), false, '1ère année', 'Civil Engineering', NOW()),
@@ -90,7 +90,7 @@ VALUES
 -- ============================================
 -- ACCOUNTANCY 1
 -- ============================================
-INSERT INTO voters (id, student_id, email, name, vote_code, has_voted, year, field, created_at)
+INSERT INTO voters (id, student_id, name, vote_code, has_voted, year, field, created_at)
 VALUES
   (generate_voter_id(), '2025041', 'AISHATOU SALI YASMINE Y.', generate_vote_code(), false, '1ère année', 'Accountancy', NOW()),
   (generate_voter_id(), '2025042', 'ALEXANDER ONUHA FRANKLIN N.', generate_vote_code(), false, '1ère année', 'Accountancy', NOW()),
@@ -105,7 +105,7 @@ VALUES
 -- ============================================
 -- BUSINESS/PROJECT MANAGEMENT 1
 -- ============================================
-INSERT INTO voters (id, student_id, email, name, vote_code, has_voted, year, field, created_at)
+INSERT INTO voters (id, student_id, name, vote_code, has_voted, year, field, created_at)
 VALUES
   (generate_voter_id(), '2025050', 'AISSATOU NOURIATOU HAMADOU', generate_vote_code(), false, '1ère année', 'Business/Project Management', NOW()),
   (generate_voter_id(), '2025051', 'ALVINE GRACE MESSINA DANIELLE', generate_vote_code(), false, '1ère année', 'Business/Project Management', NOW()),
@@ -147,7 +147,7 @@ VALUES
 -- ============================================
 -- NURSING 1
 -- ============================================
-INSERT INTO voters (id, student_id, email, name, vote_code, has_voted, year, field, created_at)
+INSERT INTO voters (id, student_id, name, vote_code, has_voted, year, field, created_at)
 VALUES
   (generate_voter_id(), '2025086', 'EYENGA SASSOM CHRISTY M.', generate_vote_code(), false, '1ère année', 'Nursing', NOW()),
   (generate_voter_id(), '2025087', 'EYOMBWE MOUNA NGANGUE J.', generate_vote_code(), false, '1ère année', 'Nursing', NOW()),
@@ -182,7 +182,7 @@ VALUES
 -- ============================================
 -- COMPUTER AND ELECTRONICS ENGINEERING 2
 -- ============================================
-INSERT INTO voters (id, student_id, email, name, vote_code, has_voted, year, field, created_at)
+INSERT INTO voters (id, student_id, name, vote_code, has_voted, year, field, created_at)
 VALUES
   (generate_voter_id(), '2025115', 'KANJE CHARLES TCHUNDENU J.', generate_vote_code(), false, '2ème année', 'Computer and Electronics Engineering', NOW()),
   (generate_voter_id(), '2025116', 'NGAMAKOUA NSANDAP ANGE S.', generate_vote_code(), false, '2ème année', 'Computer and Electronics Engineering', NOW());
@@ -190,7 +190,7 @@ VALUES
 -- ============================================
 -- CIVIL ENGINEERING 2
 -- ============================================
-INSERT INTO voters (id, student_id, email, name, vote_code, has_voted, year, field, created_at)
+INSERT INTO voters (id, student_id, name, vote_code, has_voted, year, field, created_at)
 VALUES
   (generate_voter_id(), '2025117', 'DJEUMO RUSSEL VEDRYL', generate_vote_code(), false, '2ème année', 'Civil Engineering', NOW()),
   (generate_voter_id(), '2025118', 'INACK ISIS DAPHNEE', generate_vote_code(), false, '2ème année', 'Civil Engineering', NOW()),
@@ -199,7 +199,7 @@ VALUES
 -- ============================================
 -- PREPA 2
 -- ============================================
-INSERT INTO voters (id, student_id, email, name, vote_code, has_voted, year, field, created_at)
+INSERT INTO voters (id, student_id, name, vote_code, has_voted, year, field, created_at)
 VALUES
   (generate_voter_id(), '2025120', 'DEFFO NGOUNOU STECY INA P.', generate_vote_code(), false, '2ème année', 'Prepa', NOW()),
   (generate_voter_id(), '2025121', 'JOYCE KIMBERLEY EYIKE', generate_vote_code(), false, '2ème année', 'Prepa', NOW()),
@@ -210,7 +210,7 @@ VALUES
 -- ============================================
 -- BUSINESS MANAGEMENT 2
 -- ============================================
-INSERT INTO voters (id, student_id, email, name, vote_code, has_voted, year, field, created_at)
+INSERT INTO voters (id, student_id, name, vote_code, has_voted, year, field, created_at)
 VALUES
   (generate_voter_id(), '2025125', 'BEYHIA LEONARD-BRUCE', generate_vote_code(), false, '2ème année', 'Business Management', NOW()),
   (generate_voter_id(), '2025126', 'CLARKE NIYABI ANNE-MARIE', generate_vote_code(), false, '2ème année', 'Business Management', NOW()),
@@ -223,7 +223,7 @@ VALUES
 -- ============================================
 -- NURSING 2
 -- ============================================
-INSERT INTO voters (id, student_id, email, name, vote_code, has_voted, year, field, created_at)
+INSERT INTO voters (id, student_id, name, vote_code, has_voted, year, field, created_at)
 VALUES
   (generate_voter_id(), '2025132', 'EWODI NGASSE MADELEINE DEO', generate_vote_code(), false, '2ème année', 'Nursing', NOW()),
   (generate_voter_id(), '2025133', 'JAGNI JIODA GOULA CHRIST', generate_vote_code(), false, '2ème année', 'Nursing', NOW()),
@@ -232,7 +232,7 @@ VALUES
 -- ============================================
 -- PROJECT MANAGEMENT 3 AND TOP-UP
 -- ============================================
-INSERT INTO voters (id, student_id, email, name, vote_code, has_voted, year, field, created_at)
+INSERT INTO voters (id, student_id, name, vote_code, has_voted, year, field, created_at)
 VALUES
   (generate_voter_id(), '2025135', 'NATHAN KIMBALLY NGWEN', generate_vote_code(), false, '3ème année', 'Project Management', NOW()),
   (generate_voter_id(), '2025136', 'OUMAR MOHAMED', generate_vote_code(), false, '3ème année', 'Project Management', NOW()),
@@ -241,7 +241,7 @@ VALUES
 -- ============================================
 -- COMPUTER AND ELECTRONICS ENGINEERING 3
 -- ============================================
-INSERT INTO voters (id, student_id, email, name, vote_code, has_voted, year, field, created_at)
+INSERT INTO voters (id, student_id, name, vote_code, has_voted, year, field, created_at)
 VALUES
   (generate_voter_id(), '2025138', 'CAMBAY YVES', generate_vote_code(), false, '3ème année', 'Computer and Electronics Engineering', NOW()),
   (generate_voter_id(), '2025139', 'FOTSO TEGUEO KENNY FRED', generate_vote_code(), false, '3ème année', 'Computer and Electronics Engineering', NOW()),
@@ -260,7 +260,7 @@ VALUES
 -- ============================================
 -- LEGAL CAREER 3
 -- ============================================
-INSERT INTO voters (id, student_id, email, name, vote_code, has_voted, year, field, created_at)
+INSERT INTO voters (id, student_id, name, vote_code, has_voted, year, field, created_at)
 VALUES
   (generate_voter_id(), '2025151', 'HAOUA HAIFA ABDOUL AZIZ', generate_vote_code(), false, '3ème année', 'Legal Career', NOW()),
   (generate_voter_id(), '2025152', 'LOUANGE EMMANUELLE', generate_vote_code(), false, '3ème année', 'Legal Career', NOW()),
@@ -270,7 +270,7 @@ VALUES
 -- ============================================
 -- ELECTRICAL ENGINEERING 3
 -- ============================================
-INSERT INTO voters (id, student_id, email, name, vote_code, has_voted, year, field, created_at)
+INSERT INTO voters (id, student_id, name, vote_code, has_voted, year, field, created_at)
 VALUES
   (generate_voter_id(), '2025155', 'NOUHOU ISSOUFOU', generate_vote_code(), false, '3ème année', 'Electrical Engineering', NOW());
 
