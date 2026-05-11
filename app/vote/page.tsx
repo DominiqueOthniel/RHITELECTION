@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Vote, Lock, CheckCircle, ArrowLeft, Key, AlertCircle, XCircle, User, Award, BookOpen, Target, Sparkles, GraduationCap, Briefcase, UserCircle, Linkedin, Twitter, Instagram, Facebook, Globe, ExternalLink, X, Clock, ArrowRight, QrCode, Trophy, MessageCircle } from 'lucide-react'
 import Link from 'next/link'
@@ -11,10 +11,12 @@ import { useCandidateStore } from '@/lib/candidateStore'
 import { useVoteStore } from '@/lib/voteStore'
 import { useElectionStore } from '@/lib/electionStore'
 import QRCodeScanner from '@/components/QRCodeScanner'
+import { fetchVoterByVoteCode, normalizeVoteCode } from '@/lib/supabase-helpers'
 
 export default function VotePage() {
   const router = useRouter()
-  const { getVoterByCode, markAsVoted, syncFromSupabase: syncVotersFromSupabase } = useVoterStore()
+  const { getVoterByCode, mergeVoterFromServer, markAsVoted, syncFromSupabase: syncVotersFromSupabase } =
+    useVoterStore()
   const { candidates, initializeDefaultCandidates } = useCandidateStore()
   const { addVote, syncFromSupabase: syncVotesFromSupabase } = useVoteStore()
   const { getTimeRemaining, isElectionEnded, isElectionStarted, syncFromSupabase: syncElectionFromSupabase } = useElectionStore()
@@ -28,6 +30,23 @@ export default function VotePage() {
   const [mounted, setMounted] = useState(false)
   const [timeRemaining, setTimeRemaining] = useState<{ days: number; hours: number; minutes: number; seconds: number; total: number } | null>(null)
   const [showQRScanner, setShowQRScanner] = useState(false)
+
+  /** Store local ou lecture directe Supabase si la liste n’est pas encore chargée. */
+  const resolveVoterByCode = useCallback(
+    async (raw: string) => {
+      const upper = normalizeVoteCode(raw)
+      if (!upper) return undefined
+      let v = getVoterByCode(upper)
+      if (v) return v
+      const remote = await fetchVoterByVoteCode(upper)
+      if (remote) {
+        mergeVoterFromServer(remote)
+        return remote
+      }
+      return undefined
+    },
+    [getVoterByCode, mergeVoterFromServer]
+  )
 
   // S'assurer que le composant est monté avant d'afficher les données
   useEffect(() => {
@@ -68,7 +87,7 @@ export default function VotePage() {
             }
             setVoteCode(codeParam.toUpperCase())
             // Essayer d'authentifier automatiquement
-            const voter = getVoterByCode(codeParam.toUpperCase())
+            const voter = await resolveVoterByCode(codeParam)
             if (voter && !voter.hasVoted) {
               setVoterInfo({ name: voter.name, email: voter.email })
               setIsAuthenticated(true)
@@ -85,7 +104,14 @@ export default function VotePage() {
       }
     }
     init()
-  }, [initializeDefaultCandidates, getVoterByCode, isElectionEnded, syncVotersFromSupabase, syncElectionFromSupabase, syncVotesFromSupabase])
+  }, [
+    initializeDefaultCandidates,
+    isElectionEnded,
+    resolveVoterByCode,
+    syncVotersFromSupabase,
+    syncElectionFromSupabase,
+    syncVotesFromSupabase,
+  ])
 
   // Rafraîchir les données toutes les 5 secondes pour rester synchronisé
   useEffect(() => {
@@ -117,7 +143,7 @@ export default function VotePage() {
     return () => clearInterval(interval)
   }, [getTimeRemaining])
 
-  const handleAuth = (e: React.FormEvent) => {
+  const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
     
@@ -132,7 +158,7 @@ export default function VotePage() {
       return
     }
 
-    const voter = getVoterByCode(voteCode.toUpperCase())
+    const voter = await resolveVoterByCode(voteCode)
     
     if (!voter) {
       setError('Code de vote invalide. Veuillez vérifier votre code.')
@@ -161,7 +187,7 @@ export default function VotePage() {
     setVoteCode('')
   }
 
-  const handleQRScan = (decodedText: string) => {
+  const handleQRScan = async (decodedText: string) => {
     // Vérifier si l'élection est terminée
     if (isElectionEnded()) {
       setShowQRScanner(false)
@@ -188,8 +214,7 @@ export default function VotePage() {
     
     setVoteCode(code.toUpperCase())
     setShowQRScanner(false)
-    // Simuler la soumission du formulaire
-    const voter = getVoterByCode(code.toUpperCase())
+    const voter = await resolveVoterByCode(code)
     if (voter) {
       if (voter.hasVoted) {
         setError('Ce code a déjà été utilisé pour voter.')
@@ -215,7 +240,7 @@ export default function VotePage() {
     if (selectedCandidate && voteCode) {
       try {
         // Vérifier une dernière fois que le votant n'a pas déjà voté
-        const voter = getVoterByCode(voteCode.toUpperCase())
+        const voter = await resolveVoterByCode(voteCode)
         if (!voter) {
           setError('Code de vote invalide. Veuillez vérifier votre code.')
           setIsAuthenticated(false)

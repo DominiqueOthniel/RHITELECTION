@@ -1,6 +1,12 @@
 import { create } from 'zustand'
 import { persist, createJSONStorage } from 'zustand/middleware'
-import { syncVoterToSupabase, syncVotersToSupabase, fetchVotersFromSupabase, deleteVoterFromSupabase, deleteAllVoters } from './supabase-helpers'
+import {
+  syncVoterToSupabase,
+  syncVotersToSupabase,
+  fetchVotersFromSupabase,
+  deleteVoterFromSupabase,
+  normalizeVoteCode,
+} from './supabase-helpers'
 import { generateUUID } from './utils'
 
 export interface Voter {
@@ -20,6 +26,8 @@ interface VoterStore {
   voters: Voter[]
   addVoter: (studentId: string, name: string, year?: string, field?: string) => Promise<string>
   getVoterByCode: (code: string) => Voter | undefined
+  /** Ajoute ou met à jour un votant après lecture directe Supabase (page vote). */
+  mergeVoterFromServer: (v: Voter) => void
   markAsVoted: (code: string) => Promise<void>
   deleteVoter: (id: string) => Promise<void>
   getVoterStats: () => { total: number; voted: number; pending: number }
@@ -76,8 +84,23 @@ export const useVoterStore = create<VoterStore>()(
       },
 
       getVoterByCode: (code: string) => {
-        return get().voters.find((v) => v.voteCode === code)
+        const u = normalizeVoteCode(code)
+        return get().voters.find((v) => normalizeVoteCode(v.voteCode) === u)
       },
+
+      mergeVoterFromServer: (v: Voter) =>
+        set((state) => {
+          const u = normalizeVoteCode(v.voteCode)
+          const idx = state.voters.findIndex(
+            (x) => x.id === v.id || normalizeVoteCode(x.voteCode) === u
+          )
+          if (idx >= 0) {
+            const next = [...state.voters]
+            next[idx] = v
+            return { voters: next }
+          }
+          return { voters: [...state.voters, v] }
+        }),
 
       markAsVoted: async (code: string) => {
         const updatedVoters = get().voters.map((v) =>

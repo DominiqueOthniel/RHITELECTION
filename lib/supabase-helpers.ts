@@ -104,32 +104,97 @@ export async function fetchCandidatesFromSupabase(): Promise<Candidate[]> {
 // HELPERS POUR VOTES
 // ============================================
 
+/** Même format que les codes générés côté admin (majuscules, sans espaces). */
+export function normalizeVoteCode(code: string): string {
+  return code.trim().toUpperCase().replace(/\s+/g, '')
+}
+
+function mapSupabaseRowToVoter(voter: Record<string, unknown>) {
+  const vc = String(voter.vote_code ?? '')
+  return {
+    id: voter.id as string,
+    studentId: voter.student_id as string,
+    email: (voter.email as string) ?? '',
+    name: voter.name as string,
+    voteCode: normalizeVoteCode(vc),
+    hasVoted: Boolean(voter.has_voted),
+    whatsapp: (voter.whatsapp as string) || undefined,
+    year: (voter.year as string) || undefined,
+    field: (voter.field as string) || undefined,
+    createdAt: voter.created_at as string,
+  }
+}
+
+/** Contournement si le store Zustand n’a pas encore les votants (sync / persistance). */
+export async function fetchVoterByVoteCode(rawCode: string) {
+  const code = normalizeVoteCode(rawCode)
+  if (!code) return null
+
+  let query = supabase.from('voters').select('*').eq('vote_code', code)
+  let { data, error } = await query.maybeSingle()
+
+  if (error) {
+    console.error('Erreur lecture votant par code:', error)
+    return null
+  }
+
+  if (!data) {
+    const res = await supabase.from('voters').select('*').ilike('vote_code', code).maybeSingle()
+    data = res.data
+    error = res.error
+    if (error) return null
+    if (!data) return null
+  }
+
+  return mapSupabaseRowToVoter(data as Record<string, unknown>)
+}
+
 export async function syncVoteToSupabase(
   candidateId: string,
   voterCode: string,
   electionId?: string
 ) {
   try {
-    // Récupérer l'élection active si aucune n'est fournie
+    const normalizedCode = normalizeVoteCode(voterCode)
+    if (!normalizedCode) {
+      return {
+        success: false,
+        error: { message: 'Code de vote invalide', code: 'INVALID_CODE' },
+      }
+    }
+
+    // Récupérer l'élection active si aucune n'est fournie (.single() échoue si 0 ou >1 lignes)
     let activeElectionId = electionId
     if (!activeElectionId) {
       const { data: activeElection } = await supabase
         .from('elections')
         .select('id')
         .eq('is_active', true)
-        .single()
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle()
 
       if (activeElection) {
         activeElectionId = (activeElection as any).id
       }
     }
 
-    // VÉRIFICATION 1: Vérifier que le code existe dans la table voters
-    const { data: voter, error: voterError } = await supabase
+    // VÉRIFICATION 1: code présent dans voters (eq puis ilike si imports anciens en casse différente)
+    let { data: voter, error: voterError } = await supabase
       .from('voters')
       .select('id, has_voted')
-      .eq('vote_code', voterCode)
-      .single()
+      .eq('vote_code', normalizedCode)
+      .maybeSingle()
+
+    if (!voter && !voterError) {
+      const q2 = await supabase
+        .from('voters')
+        .select('id, has_voted')
+        .ilike('vote_code', normalizedCode)
+        .maybeSingle()
+      voter = q2.data
+      voterError = q2.error
+    }
 
     if (voterError || !voter) {
       console.error('Code de vote invalide:', voterError)
@@ -153,7 +218,7 @@ export async function syncVoteToSupabase(
     let voteQuery: any = supabase
       .from('votes')
       .select('id')
-      .eq('voter_code', voterCode)
+      .eq('voter_code', normalizedCode)
     
     if (activeElectionId) {
       voteQuery = voteQuery.eq('election_id', activeElectionId)
@@ -161,7 +226,7 @@ export async function syncVoteToSupabase(
       voteQuery = voteQuery.is('election_id', null)
     }
     
-    const { data: existingVote, error: checkError } = await voteQuery.single()
+    const { data: existingVote, error: checkError } = await voteQuery.maybeSingle()
 
     if (checkError && checkError.code !== 'PGRST116') { // PGRST116 = no rows returned (c'est OK)
       console.error('Erreur lors de la vérification du vote existant:', checkError)
@@ -256,7 +321,7 @@ export async function syncVoteToSupabase(
       .insert({
         id: voteId,
         candidate_id: finalCandidateId,
-        voter_code: voterCode,
+        voter_code: normalizedCode,
         election_id: activeElectionId || null,
         is_automatic: isAutomatic,
       } as any)
@@ -279,7 +344,7 @@ export async function syncVoteToSupabase(
     const { error: updateError } = await supabaseClient
       .from('voters')
       .update({ has_voted: true })
-      .eq('vote_code', voterCode)
+      .eq('id', voterData.id)
 
     if (updateError) {
       console.error('Erreur lors de la mise à jour du statut de vote:', updateError)
@@ -447,18 +512,9 @@ export async function fetchVotersFromSupabase() {
       return []
     }
 
-    return (data || []).map((voter: any) => ({
-      id: voter.id,
-      studentId: voter.student_id,
-      email: voter.email,
-      name: voter.name,
-      voteCode: voter.vote_code,
-      hasVoted: voter.has_voted,
-      whatsapp: voter.whatsapp || undefined,
-      year: voter.year || undefined,
-      field: voter.field || undefined,
-      createdAt: voter.created_at,
-    }))
+    return (data || []).map((row: Record<string, unknown>) =>
+      mapSupabaseRowToVoter(row)
+    )
   } catch (error) {
     console.error('Erreur inattendue lors de la récupération:', error)
     return []
@@ -674,7 +730,9 @@ export async function fetchElectionEndDate(): Promise<string | null> {
       .from('elections')
       .select('end_date')
       .eq('is_active', true)
-      .single()
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle()
 
     if (error || !data) {
       return null
