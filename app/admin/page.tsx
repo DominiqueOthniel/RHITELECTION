@@ -43,6 +43,19 @@ import { useVoteStore } from '@/lib/voteStore'
 import { useElectionStore } from '@/lib/electionStore'
 import QRCodeDisplay from '@/components/QRCodeDisplay'
 
+/** Lecture synchrone de la date d’élection après fetch (évite une closure périmée sur `endDate`). */
+function syncElectionDateFieldsToForm(
+  setElectionEndDate: (v: string) => void,
+  setElectionEndTime: (v: string) => void
+) {
+  const syncedEnd = useElectionStore.getState().endDate
+  if (syncedEnd) {
+    const date = new Date(syncedEnd)
+    setElectionEndDate(date.toISOString().split('T')[0])
+    setElectionEndTime(date.toTimeString().slice(0, 5))
+  }
+}
+
 // Composant interne pour utiliser useSearchParams avec Suspense
 function AdminPageContent() {
   const router = useRouter()
@@ -403,16 +416,14 @@ function AdminPageContent() {
       await syncVotesFromSupabase() // Charge les votes depuis Supabase
       await syncElectionFromSupabase() // Charge la date de fin depuis Supabase
       await loadAutoVoteConfig() // Charge la configuration des votes automatiques
-      
-      // Initialiser les champs de date si une date existe
-      if (endDate) {
-        const date = new Date(endDate)
-        setElectionEndDate(date.toISOString().split('T')[0])
-        setElectionEndTime(date.toTimeString().slice(0, 5))
-      }
+
+      // Ne pas utiliser `endDate` du hook ici : après await il peut être périmé ; utiliser le store.
+      syncElectionDateFieldsToForm(setElectionEndDate, setElectionEndTime)
     }
     init()
-  }, [initializeDefaultCandidates, syncVotersFromSupabase, syncVotesFromSupabase, syncElectionFromSupabase, endDate])
+    // Important : ne pas dépendre de `endDate`. Sinon chaque définition de délai relance tout l’init
+    // et remplace la liste des votants par un fetch — en cas d’erreur réseau ou latence, la liste semble « vidée ».
+  }, [initializeDefaultCandidates, syncVotersFromSupabase, syncVotesFromSupabase, syncElectionFromSupabase, router])
 
   // Fonction pour mettre à jour le classement
   const updateRanking = useCallback(() => {
