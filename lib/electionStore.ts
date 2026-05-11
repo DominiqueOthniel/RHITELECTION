@@ -69,6 +69,8 @@ export const useElectionStore = create<ElectionStore>()(
     {
       name: 'election-storage',
       storage: createJSONStorage(() => localStorage),
+      // Évite que la date lue depuis localStorage diffère du SSR avant le 1er paint (hydratation).
+      skipHydration: true,
     }
   )
 )

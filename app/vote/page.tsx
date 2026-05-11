@@ -312,16 +312,15 @@ export default function VotePage() {
               <p className="text-xs sm:text-sm text-gray-600 hidden sm:block">Bureau des Étudiants</p>
             </div>
           </Link>
-          <Link href="/">
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
+          <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="inline-block">
+            <Link
+              href="/"
               className="px-3 py-2 sm:px-4 sm:py-2 text-gray-700 hover:text-bordeaux-600 text-sm sm:text-base font-medium rounded-lg flex items-center space-x-1 sm:space-x-2"
             >
               <ArrowLeft className="w-4 h-4" />
               <span className="hidden sm:inline">Retour</span>
-            </motion.button>
-          </Link>
+            </Link>
+          </motion.div>
         </div>
       </header>
 
@@ -409,16 +408,19 @@ export default function VotePage() {
                     <AlertCircle className="w-12 h-12 text-red-600 mx-auto mb-3" />
                     <h3 className="text-xl font-bold text-red-900 mb-2">Les votes sont terminés</h3>
                     <p className="text-red-700 mb-4">L&apos;élection est fermée. Vous ne pouvez plus voter.</p>
-                    <Link href="/results">
-                      <motion.button
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                        className="px-6 py-3 bg-red-600 text-white font-semibold rounded-xl hover:bg-red-700 transition-colors flex items-center space-x-2 mx-auto"
+                    <motion.div
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      className="inline-flex mx-auto"
+                    >
+                      <Link
+                        href="/results"
+                        className="px-6 py-3 bg-red-600 text-white font-semibold rounded-xl hover:bg-red-700 transition-colors flex items-center space-x-2"
                       >
                         <Trophy className="w-5 h-5" />
                         <span>Voir les résultats</span>
-                      </motion.button>
-                    </Link>
+                      </Link>
+                    </motion.div>
                   </div>
                 </motion.div>
               ) : isElectionStarted() ? (
@@ -762,16 +764,19 @@ export default function VotePage() {
                       <AlertCircle className="w-12 h-12 text-red-600 mx-auto mb-3" />
                       <h3 className="text-xl font-bold text-red-900 mb-2">Les votes sont terminés</h3>
                       <p className="text-red-700 mb-4">L&apos;élection est fermée. Vous ne pouvez plus voter.</p>
-                      <Link href="/results">
-                        <motion.button
-                          whileHover={{ scale: 1.05 }}
-                          whileTap={{ scale: 0.95 }}
-                          className="px-6 py-3 bg-red-600 text-white font-semibold rounded-xl hover:bg-red-700 transition-colors flex items-center space-x-2 mx-auto"
+                      <motion.div
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        className="inline-flex mx-auto"
+                      >
+                        <Link
+                          href="/results"
+                          className="px-6 py-3 bg-red-600 text-white font-semibold rounded-xl hover:bg-red-700 transition-colors flex items-center space-x-2"
                         >
                           <Trophy className="w-5 h-5" />
                           <span>Voir les résultats</span>
-                        </motion.button>
-                      </Link>
+                        </Link>
+                      </motion.div>
                     </div>
                   ) : (
                     <motion.button

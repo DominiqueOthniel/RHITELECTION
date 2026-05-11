@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import './globals.css'
+import { RehydrateStores } from '@/components/RehydrateStores'
 
 export const metadata: Metadata = {
   title: 'RHIT Élections - Bureau des Étudiants',
@@ -15,7 +16,10 @@ export default function RootLayout({
 }) {
   return (
     <html lang="fr" suppressHydrationWarning>
-      <body suppressHydrationWarning>{children}</body>
+      <body suppressHydrationWarning>
+        <RehydrateStores />
+        {children}
+      </body>
     </html>
   )
 }
