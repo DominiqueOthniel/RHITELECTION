@@ -2,6 +2,7 @@ import { supabase } from './supabase'
 import type { Candidate } from './candidateStore'
 import type { Vote } from './voteStore'
 import type { Database } from './supabase'
+import { generateUUID } from './utils'
 
 // ============================================
 // HELPERS POUR CANDIDATES
@@ -365,7 +366,7 @@ export async function syncVoterToSupabase(voter: {
     }
 
     // Créer aussi le code dans voter_codes si nécessaire
-    await createVoterCodes([voter.voteCode])
+    await createVoterCodes([{ code: voter.voteCode, voterId: voter.id }])
 
     return { success: true }
   } catch (error) {
@@ -423,8 +424,9 @@ export async function syncVotersToSupabase(voters: Array<{
     }
 
     // Créer aussi les codes dans voter_codes
-    const codes = uniqueVoters.map(v => v.voteCode)
-    await createVoterCodes(codes)
+    await createVoterCodes(
+      uniqueVoters.map((v) => ({ code: v.voteCode, voterId: v.id }))
+    )
 
     return { success: true }
   } catch (error) {
@@ -535,39 +537,72 @@ export async function checkVoterCodeValid(
   }
 }
 
+/** Associe chaque code à l'élection active ; upsert sur `code` (contrainte UNIQUE). */
 export async function createVoterCodes(
-  codes: string[],
+  entries: Array<{ code: string; voterId?: string }>,
   electionId?: string
 ) {
   try {
-    // Récupérer l'élection active si aucune n'est fournie
+    if (entries.length === 0) return { success: true }
+
     let activeElectionId = electionId
     if (!activeElectionId) {
       const { data: activeElection } = await supabase
         .from('elections')
         .select('id')
         .eq('is_active', true)
-        .single()
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle()
 
       if (activeElection) {
         activeElectionId = (activeElection as any).id
       }
     }
 
-    const codesToInsert = codes.map(code => ({
-      code,
-      election_id: activeElectionId || null,
-      is_used: false,
-    }))
-
-    // @ts-ignore - Type issue avec Supabase
-    const { error } = await supabase
+    // La table voter_codes exige une clé primaire `id`. Les inserts sans id échouaient (silencieusement).
+    // On n'utilise pas upsert global sur is_used : sinon chaque sync remettrait is_used à false après un vote.
+    const codeList = entries.map((e) => e.code)
+    const { data: existingRows } = await supabase
       .from('voter_codes')
-      .insert(codesToInsert as any)
+      .select('code')
+      .in('code', codeList)
 
-    if (error) {
-      console.error('Erreur lors de la création des codes:', error)
-      return { success: false, error }
+    const existingCodes = new Set((existingRows || []).map((r: { code: string }) => r.code))
+
+    const toInsert = entries
+      .filter((e) => !existingCodes.has(e.code))
+      .map(({ code, voterId }) => ({
+        id: `vc-${code}`,
+        code,
+        election_id: activeElectionId ?? null,
+        is_used: false,
+        voter_id: voterId ?? null,
+      }))
+
+    if (toInsert.length > 0) {
+      // @ts-ignore
+      const { error: insErr } = await supabase.from('voter_codes').insert(toInsert as any)
+      if (insErr) {
+        console.error('Erreur lors de la création des codes:', insErr)
+        return { success: false, error: insErr }
+      }
+    }
+
+    const toUpdate = entries.filter((e) => existingCodes.has(e.code))
+    for (const { code, voterId } of toUpdate) {
+      const { error: upErr } = await supabase
+        .from('voter_codes')
+        .update({
+          election_id: activeElectionId ?? null,
+          voter_id: voterId ?? null,
+        })
+        .eq('code', code)
+
+      if (upErr) {
+        console.error('Erreur lors de la mise à jour du code:', upErr)
+        return { success: false, error: upErr }
+      }
     }
 
     return { success: true }
@@ -583,19 +618,21 @@ export async function createVoterCodes(
 
 export async function syncElectionEndDate(endDate: string | null) {
   try {
-    // Récupérer l'élection active
     const { data: activeElection } = await supabase
       .from('elections')
       .select('id')
       .eq('is_active', true)
-      .single()
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle()
 
     if (!activeElection) {
-      // Créer une nouvelle élection si aucune n'existe
+      // elections.id est NOT NULL sans DEFAULT : il faut toujours fournir un id
       // @ts-ignore - Type issue avec Supabase
       const { data: newElection, error: createError } = await supabase
         .from('elections')
         .insert({
+          id: generateUUID(),
           name: 'Élection RHIT',
           is_active: true,
           end_date: endDate,

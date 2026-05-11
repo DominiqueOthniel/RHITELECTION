@@ -308,8 +308,8 @@ $$ LANGUAGE plpgsql;
 -- DONNÉES PAR DÉFAUT (Optionnel)
 -- ============================================
 
--- Créer une élection par défaut
-INSERT INTO elections (name, is_active)
-VALUES ('Élection RHIT 2025', true)
-ON CONFLICT DO NOTHING;
+-- Créer une élection par défaut (id obligatoire : pas de DEFAULT sur elections.id)
+INSERT INTO elections (id, name, is_active)
+VALUES ('election-2025', 'Élection RHIT 2025', true)
+ON CONFLICT (id) DO NOTHING;
 
