@@ -590,8 +590,9 @@ export async function createVoterCodes(
     }
 
     const toUpdate = entries.filter((e) => existingCodes.has(e.code))
+    const db = supabase as any
     for (const { code, voterId } of toUpdate) {
-      const { error: upErr } = await supabase
+      const { error: upErr } = await db
         .from('voter_codes')
         .update({
           election_id: activeElectionId ?? null,
