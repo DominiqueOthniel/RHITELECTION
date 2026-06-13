@@ -848,7 +848,7 @@ export async function resetVotingSession() {
         return codesResult
       }
 
-      return { success: true, data: votesResult.data }
+      return { success: true }
     }
 
     return { success: true, data }

@@ -246,8 +246,9 @@ function AdminPageContent() {
         const { resetVotingSession } = await import('@/lib/supabase-helpers')
         const result = await resetVotingSession()
         if (!result.success) {
+          const resetError = 'error' in result ? result.error : undefined
           const message =
-            (result.error as { message?: string } | undefined)?.message ??
+            (resetError as { message?: string } | undefined)?.message ??
             'Échec de la réinitialisation dans Supabase'
           throw new Error(message)
         }
