@@ -673,27 +673,31 @@ export async function createVoterCodes(
 // HELPERS POUR ELECTIONS
 // ============================================
 
+export const DEFAULT_ELECTION_ID = 'election-2025'
+
 export async function syncElectionEndDate(endDate: string | null) {
   try {
-    const { data: activeElection } = await supabase
+    const supabaseClient = supabase as any
+    const { data: existingElection, error: fetchError } = await supabaseClient
       .from('elections')
       .select('id')
-      .eq('is_active', true)
-      .order('created_at', { ascending: false })
-      .limit(1)
+      .eq('id', DEFAULT_ELECTION_ID)
       .maybeSingle()
 
-    if (!activeElection) {
-      // elections.id est NOT NULL sans DEFAULT : il faut toujours fournir un id
-      // @ts-ignore - Type issue avec Supabase
-      const { data: newElection, error: createError } = await supabase
+    if (fetchError) {
+      console.error('Erreur lors de la lecture de l\'élection:', fetchError)
+      return { success: false, error: fetchError }
+    }
+
+    if (!existingElection) {
+      const { data: newElection, error: createError } = await supabaseClient
         .from('elections')
         .insert({
-          id: generateUUID(),
-          name: 'Élection RHIT',
+          id: DEFAULT_ELECTION_ID,
+          name: 'Élection RHIT 2025',
           is_active: true,
           end_date: endDate,
-        } as any)
+        })
         .select()
         .single()
 
@@ -705,12 +709,10 @@ export async function syncElectionEndDate(endDate: string | null) {
       return { success: true, election: newElection }
     }
 
-    // Mettre à jour l'élection existante
-    const supabaseClient = supabase as any
     const { error: updateError } = await supabaseClient
       .from('elections')
       .update({ end_date: endDate })
-      .eq('id', (activeElection as any).id)
+      .eq('id', DEFAULT_ELECTION_ID)
 
     if (updateError) {
       console.error('Erreur lors de la mise à jour de l\'élection:', updateError)
@@ -729,16 +731,14 @@ export async function fetchElectionEndDate(): Promise<string | null> {
     const { data, error } = await supabase
       .from('elections')
       .select('end_date')
-      .eq('is_active', true)
-      .order('created_at', { ascending: false })
-      .limit(1)
+      .eq('id', DEFAULT_ELECTION_ID)
       .maybeSingle()
 
     if (error || !data) {
       return null
     }
 
-    return (data as any).end_date
+    return (data as { end_date: string | null }).end_date
   } catch (error) {
     console.error('Erreur lors de la récupération de la date:', error)
     return null
@@ -791,23 +791,89 @@ export async function deleteAllVoterCodes() {
 
 export async function deleteAllVotes() {
   try {
-    // Supprimer TOUS les votes de Supabase
-    // Utiliser une condition toujours vraie pour supprimer tous les enregistrements
     const supabaseClient = supabase as any
-    const { error } = await supabaseClient
+    const { error, count } = await supabaseClient
       .from('votes')
-      .delete()
-      .neq('id', '') // Condition toujours vraie (id ne peut jamais être une chaîne vide)
+      .delete({ count: 'exact' })
+      .neq('id', '')
 
     if (error) {
       console.error('Erreur lors de la suppression des votes:', error)
       return { success: false, error }
     }
 
-    console.log('✅ Tous les votes ont été supprimés de Supabase')
+    if (typeof count === 'number' && count === 0) {
+      const { count: remainingCount, error: countError } = await supabaseClient
+        .from('votes')
+        .select('*', { count: 'exact', head: true })
+
+      if (!countError && typeof remainingCount === 'number' && remainingCount > 0) {
+        return {
+          success: false,
+          error: {
+            message:
+              'Aucun vote supprimé. Exécutez supabase/reset-voting-session.sql dans Supabase.',
+            code: 'DELETE_BLOCKED',
+          },
+        }
+      }
+    }
+
     return { success: true }
   } catch (error) {
     console.error('Erreur inattendue lors de la suppression:', error)
+    return { success: false, error }
+  }
+}
+
+export async function resetVotingSession() {
+  try {
+    const supabaseClient = supabase as any
+    const { data, error } = await supabaseClient.rpc('reset_voting_session')
+
+    if (error) {
+      console.error('Erreur reset_voting_session:', error)
+      const votesResult = await deleteAllVotes()
+      if (!votesResult.success) {
+        return votesResult
+      }
+
+      const votersResult = await resetAllVotersHasVoted()
+      if (!votersResult.success) {
+        return votersResult
+      }
+
+      const codesResult = await resetAllVoterCodes()
+      if (!codesResult.success) {
+        return codesResult
+      }
+
+      return { success: true, data: votesResult.data }
+    }
+
+    return { success: true, data }
+  } catch (error) {
+    console.error('Erreur inattendue lors de la réinitialisation:', error)
+    return { success: false, error }
+  }
+}
+
+export async function resetAllVotersHasVoted() {
+  try {
+    const supabaseClient = supabase as any
+    const { error } = await supabaseClient
+      .from('voters')
+      .update({ has_voted: false })
+      .neq('id', '')
+
+    if (error) {
+      console.error('Erreur lors de la réinitialisation has_voted:', error)
+      return { success: false, error }
+    }
+
+    return { success: true }
+  } catch (error) {
+    console.error('Erreur inattendue lors de la réinitialisation has_voted:', error)
     return { success: false, error }
   }
 }

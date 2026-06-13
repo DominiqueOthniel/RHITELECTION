@@ -244,6 +244,10 @@ CREATE POLICY "Votes can be inserted by anyone"
   ON votes FOR INSERT
   WITH CHECK (true);
 
+CREATE POLICY "Votes can be deleted by anyone"
+  ON votes FOR DELETE
+  USING (true);
+
 -- ============================================
 -- FONCTIONS UTILITAIRES
 -- ============================================

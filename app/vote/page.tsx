@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Vote, Lock, CheckCircle, ArrowLeft, Key, AlertCircle, XCircle, User, Award, BookOpen, Target, Sparkles, GraduationCap, Briefcase, UserCircle, Linkedin, Twitter, Instagram, Facebook, Globe, ExternalLink, X, Clock, ArrowRight, QrCode, Trophy, MessageCircle } from 'lucide-react'
 import Link from 'next/link'
@@ -30,6 +30,8 @@ export default function VotePage() {
   const [mounted, setMounted] = useState(false)
   const [timeRemaining, setTimeRemaining] = useState<{ days: number; hours: number; minutes: number; seconds: number; total: number } | null>(null)
   const [showQRScanner, setShowQRScanner] = useState(false)
+  const [isSubmittingVote, setIsSubmittingVote] = useState(false)
+  const voteSubmissionRef = useRef(false)
 
   /** Store local ou lecture directe Supabase si la liste n’est pas encore chargée. */
   const resolveVoterByCode = useCallback(
@@ -231,6 +233,8 @@ export default function VotePage() {
   }
 
   const handleVote = async () => {
+    if (voteSubmissionRef.current) return
+
     // Vérifier si l'élection est terminée
     if (isElectionEnded()) {
       alert('Les votes sont terminés. L\'élection est fermée. Vous ne pouvez plus voter.')
@@ -238,6 +242,10 @@ export default function VotePage() {
     }
     
     if (selectedCandidate && voteCode) {
+      voteSubmissionRef.current = true
+      setIsSubmittingVote(true)
+      setError('')
+
       try {
         // Vérifier une dernière fois que le votant n'a pas déjà voté
         const voter = await resolveVoterByCode(voteCode)
@@ -284,6 +292,9 @@ export default function VotePage() {
         setError('Une erreur est survenue lors de l\'enregistrement de votre vote. Veuillez réessayer.')
         setIsAuthenticated(false)
         setShowAuthModal(true)
+      } finally {
+        voteSubmissionRef.current = false
+        setIsSubmittingVote(false)
       }
     }
   }
@@ -781,18 +792,30 @@ export default function VotePage() {
                   ) : (
                     <motion.button
                       onClick={handleVote}
-                      disabled={!selectedCandidate || isElectionEnded()}
-                      whileHover={selectedCandidate && !isElectionEnded() ? { scale: 1.02, y: -2 } : {}}
-                      whileTap={selectedCandidate && !isElectionEnded() ? { scale: 0.98 } : {}}
+                      disabled={!selectedCandidate || isElectionEnded() || isSubmittingVote}
+                      whileHover={selectedCandidate && !isElectionEnded() && !isSubmittingVote ? { scale: 1.02, y: -2 } : {}}
+                      whileTap={selectedCandidate && !isElectionEnded() && !isSubmittingVote ? { scale: 0.98 } : {}}
                       className={`w-full py-4 sm:py-5 text-base sm:text-lg font-bold rounded-2xl transition-all duration-300 flex items-center justify-center space-x-2 sm:space-x-3 shadow-lg ${
-                        selectedCandidate && !isElectionEnded()
+                        selectedCandidate && !isElectionEnded() && !isSubmittingVote
                           ? 'gradient-bordeaux text-white shadow-bordeaux-lg hover:shadow-bordeaux-lg'
+                          : isSubmittingVote
+                          ? 'bg-bordeaux-400 text-white cursor-wait'
                           : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                       }`}
                     >
-                      <Vote className="w-5 h-5 sm:w-6 sm:h-6" />
-                      <span className="text-sm sm:text-base">{selectedCandidate ? 'Confirmer mon vote' : 'Sélectionnez un candidat pour voter'}</span>
-                      {selectedCandidate && <CheckCircle className="w-5 h-5 sm:w-6 sm:h-6" />}
+                      {isSubmittingVote ? (
+                        <div className="w-5 h-5 sm:w-6 sm:h-6 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      ) : (
+                        <Vote className="w-5 h-5 sm:w-6 sm:h-6" />
+                      )}
+                      <span className="text-sm sm:text-base">
+                        {isSubmittingVote
+                          ? 'Enregistrement du vote...'
+                          : selectedCandidate
+                          ? 'Confirmer mon vote'
+                          : 'Sélectionnez un candidat pour voter'}
+                      </span>
+                      {selectedCandidate && !isSubmittingVote && <CheckCircle className="w-5 h-5 sm:w-6 sm:h-6" />}
                     </motion.button>
                   )}
                 </motion.div>

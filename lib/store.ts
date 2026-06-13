@@ -132,15 +132,11 @@ export const useVoterStore = create<VoterStore>()(
       },
 
       resetVoteStats: async () => {
-        // 1. Réinitialiser hasVoted localement
         const updatedVoters = get().voters.map((v) => ({ ...v, hasVoted: false }))
         set({ voters: updatedVoters })
-        
-        // 2. Synchroniser tous les votants avec Supabase (has_voted = false)
-        await syncVotersToSupabase(updatedVoters)
-        
-        // 3. Réinitialiser les codes de vote dans voter_codes (is_used = false)
-        const { resetAllVoterCodes } = await import('./supabase-helpers')
+
+        const { resetAllVotersHasVoted, resetAllVoterCodes } = await import('./supabase-helpers')
+        await resetAllVotersHasVoted()
         await resetAllVoterCodes()
       },
 

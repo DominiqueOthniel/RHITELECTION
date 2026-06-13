@@ -61,9 +61,9 @@ function AdminPageContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const showAutoVote = searchParams.get('showAutoVote') === 'true'
-  const { voters, addVoter, deleteVoter, getVoterStats, resetVoteStats, syncFromSupabase: syncVotersFromSupabase } = useVoterStore()
+  const { voters, addVoter, deleteVoter, getVoterStats, syncFromSupabase: syncVotersFromSupabase } = useVoterStore()
   const { candidates, addCandidate, updateCandidate, deleteCandidate, clearAllCandidates, initializeDefaultCandidates } = useCandidateStore()
-  const { clearAllVotes, getVotesByCandidate, getTotalVotes, votes, syncFromSupabase: syncVotesFromSupabase } = useVoteStore()
+  const { getVotesByCandidate, getTotalVotes, votes, syncFromSupabase: syncVotesFromSupabase } = useVoteStore()
   const { endDate, setEndDate, getTimeRemaining, syncFromSupabase: syncElectionFromSupabase } = useElectionStore()
   const [activeTab, setActiveTab] = useState<'voters' | 'candidates'>('voters')
   const [mounted, setMounted] = useState(false)
@@ -243,37 +243,37 @@ function AdminPageContent() {
   const handleResetVoteStats = async () => {
     if (confirm('Êtes-vous sûr de vouloir réinitialiser toutes les statistiques de vote ?\n\nCette action va :\n- Supprimer TOUS les votes de Supabase\n- Réinitialiser le statut "a voté" de tous les votants\n- Réinitialiser les codes de vote (pour permettre de revoter)\n- Réinitialiser la date de fin de l\'élection\n- Permettre de démarrer un nouveau cycle d\'élection\n\nCette action est irréversible.')) {
       try {
-        // 1. Supprimer tous les votes de Supabase (et du store local)
-        const result = await clearAllVotes()
-        if (result && result.success === false) {
-          throw new Error('Échec de la suppression des votes dans Supabase')
+        const { resetVotingSession } = await import('@/lib/supabase-helpers')
+        const result = await resetVotingSession()
+        if (!result.success) {
+          const message =
+            (result.error as { message?: string } | undefined)?.message ??
+            'Échec de la réinitialisation dans Supabase'
+          throw new Error(message)
         }
-        console.log('✅ Tous les votes ont été supprimés de Supabase')
-        
-        // 2. Réinitialiser les statuts des votants et les codes de vote
-        await resetVoteStats()
-        
-        // 2.5. Réinitialiser le compteur de votes automatiques
+
+        useVoteStore.setState({ votes: [] })
+        useVoterStore.setState({
+          voters: useVoterStore.getState().voters.map((voter) => ({ ...voter, hasVoted: false })),
+        })
+
         await resetAutoVoteCounter()
-        
-        // 3. Réinitialiser la date de fin
+
         await setEndDate(null)
         setElectionEndDate('')
         setElectionEndTime('')
-        
-        // 4. Re-synchroniser les données depuis Supabase pour mettre à jour l'affichage
-        await syncVotesFromSupabase()
-        await syncVotersFromSupabase()
-        
-        // 5. Forcer la mise à jour du classement après un court délai pour s'assurer que le store est à jour
-        setTimeout(() => {
-          updateRanking()
-        }, 100)
-        
-        alert('Les statistiques de vote ont été réinitialisées avec succès. Tous les votes ont été supprimés de Supabase. Vous pouvez maintenant configurer une nouvelle date de fin pour le prochain cycle d\'élection.')
+
+        await Promise.all([syncVotesFromSupabase(), syncVotersFromSupabase()])
+        updateRanking()
+
+        alert('Les statistiques de vote ont été réinitialisées avec succès.')
       } catch (error) {
         console.error('Erreur lors de la réinitialisation:', error)
-        alert('Une erreur est survenue lors de la réinitialisation. Veuillez réessayer.')
+        alert(
+          error instanceof Error
+            ? `${error.message}\n\nSi le problème persiste, exécutez supabase/reset-voting-session.sql dans Supabase.`
+            : 'Une erreur est survenue lors de la réinitialisation. Veuillez réessayer.'
+        )
       }
     }
   }
@@ -282,8 +282,13 @@ function AdminPageContent() {
     if (electionEndDate && electionEndTime) {
       const dateTime = new Date(`${electionEndDate}T${electionEndTime}`)
       if (dateTime > new Date()) {
-        await setEndDate(dateTime.toISOString())
-        alert('Date de fin des votes configurée avec succès !')
+        try {
+          await setEndDate(dateTime.toISOString())
+          alert('Date de fin des votes configurée avec succès !')
+        } catch (error) {
+          console.error('Erreur lors de la sauvegarde de la date de fin:', error)
+          alert('Impossible de sauvegarder la date dans Supabase. Vérifiez les permissions RLS sur la table elections.')
+        }
       } else {
         alert('La date de fin doit être dans le futur.')
       }
